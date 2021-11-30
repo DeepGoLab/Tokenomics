@@ -1,0 +1,131 @@
+{
+  "address": "0x6748dAeA9f2F668ED4a425000E4d61b07797CA75",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_addr",
+          "type": "address"
+        }
+      ],
+      "name": "addressHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_addr",
+          "type": "address"
+        }
+      ],
+      "name": "ethSignedHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        }
+      ],
+      "name": "recover",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "hash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "signature",
+          "type": "bytes"
+        },
+        {
+          "internalType": "address",
+          "name": "signer",
+          "type": "address"
+        }
+      ],
+      "name": "verified",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x289e7715b13b9fbd4fdd77ae7f215192137d9bb3651afba2484d78d1375973f9",
+  "receipt": {
+    "to": null,
+    "from": "0x6993AffA5572139D896B67Fe3A108B51EB6f8B53",
+    "contractAddress": "0x6748dAeA9f2F668ED4a425000E4d61b07797CA75",
+    "transactionIndex": 0,
+    "gasUsed": "452989",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xfb9f65f6d962555f22c77b962e2b46954a98996b7c70f8639ab4f654d9dfc250",
+    "transactionHash": "0x289e7715b13b9fbd4fdd77ae7f215192137d9bb3651afba2484d78d1375973f9",
+    "logs": [],
+    "blockNumber": 9531808,
+    "cumulativeGasUsed": "452989",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "3c70c77d428e61bb6242bf0749abc803",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.4+commit.c7e474f2\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"addressHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"ethSignedHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"recover\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"verified\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/reference/Sig.sol\":\"Sig\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/cryptography/ECDSA.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.\\n *\\n * These functions can be used to verify that a message was signed by the holder\\n * of the private keys of a given address.\\n */\\nlibrary ECDSA {\\n    enum RecoverError {\\n        NoError,\\n        InvalidSignature,\\n        InvalidSignatureLength,\\n        InvalidSignatureS,\\n        InvalidSignatureV\\n    }\\n\\n    function _throwError(RecoverError error) private pure {\\n        if (error == RecoverError.NoError) {\\n            return; // no error: do nothing\\n        } else if (error == RecoverError.InvalidSignature) {\\n            revert(\\\"ECDSA: invalid signature\\\");\\n        } else if (error == RecoverError.InvalidSignatureLength) {\\n            revert(\\\"ECDSA: invalid signature length\\\");\\n        } else if (error == RecoverError.InvalidSignatureS) {\\n            revert(\\\"ECDSA: invalid signature 's' value\\\");\\n        } else if (error == RecoverError.InvalidSignatureV) {\\n            revert(\\\"ECDSA: invalid signature 'v' value\\\");\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address that signed a hashed message (`hash`) with\\n     * `signature` or error string. This address can then be used for verification purposes.\\n     *\\n     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:\\n     * this function rejects them by requiring the `s` value to be in the lower\\n     * half order, and the `v` value to be either 27 or 28.\\n     *\\n     * IMPORTANT: `hash` _must_ be the result of a hash operation for the\\n     * verification to be secure: it is possible to craft signatures that\\n     * recover to arbitrary addresses for non-hashed data. A safe way to ensure\\n     * this is by receiving a hash of the original message (which may otherwise\\n     * be too long), and then calling {toEthSignedMessageHash} on it.\\n     *\\n     * Documentation for signature generation:\\n     * - with https://web3js.readthedocs.io/en/v1.3.4/web3-eth-accounts.html#sign[Web3.js]\\n     * - with https://docs.ethers.io/v5/api/signer/#Signer-signMessage[ethers]\\n     *\\n     * _Available since v4.3._\\n     */\\n    function tryRecover(bytes32 hash, bytes memory signature) internal pure returns (address, RecoverError) {\\n        // Check the signature length\\n        // - case 65: r,s,v signature (standard)\\n        // - case 64: r,vs signature (cf https://eips.ethereum.org/EIPS/eip-2098) _Available since v4.1._\\n        if (signature.length == 65) {\\n            bytes32 r;\\n            bytes32 s;\\n            uint8 v;\\n            // ecrecover takes the signature parameters, and the only way to get them\\n            // currently is to use assembly.\\n            assembly {\\n                r := mload(add(signature, 0x20))\\n                s := mload(add(signature, 0x40))\\n                v := byte(0, mload(add(signature, 0x60)))\\n            }\\n            return tryRecover(hash, v, r, s);\\n        } else if (signature.length == 64) {\\n            bytes32 r;\\n            bytes32 vs;\\n            // ecrecover takes the signature parameters, and the only way to get them\\n            // currently is to use assembly.\\n            assembly {\\n                r := mload(add(signature, 0x20))\\n                vs := mload(add(signature, 0x40))\\n            }\\n            return tryRecover(hash, r, vs);\\n        } else {\\n            return (address(0), RecoverError.InvalidSignatureLength);\\n        }\\n    }\\n\\n    /**\\n     * @dev Returns the address that signed a hashed message (`hash`) with\\n     * `signature`. This address can then be used for verification purposes.\\n     *\\n     * The `ecrecover` EVM opcode allows for malleable (non-unique) signatures:\\n     * this function rejects them by requiring the `s` value to be in the lower\\n     * half order, and the `v` value to be either 27 or 28.\\n     *\\n     * IMPORTANT: `hash` _must_ be the result of a hash operation for the\\n     * verification to be secure: it is possible to craft signatures that\\n     * recover to arbitrary addresses for non-hashed data. A safe way to ensure\\n     * this is by receiving a hash of the original message (which may otherwise\\n     * be too long), and then calling {toEthSignedMessageHash} on it.\\n     */\\n    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {\\n        (address recovered, RecoverError error) = tryRecover(hash, signature);\\n        _throwError(error);\\n        return recovered;\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.\\n     *\\n     * See https://eips.ethereum.org/EIPS/eip-2098[EIP-2098 short signatures]\\n     *\\n     * _Available since v4.3._\\n     */\\n    function tryRecover(\\n        bytes32 hash,\\n        bytes32 r,\\n        bytes32 vs\\n    ) internal pure returns (address, RecoverError) {\\n        bytes32 s;\\n        uint8 v;\\n        assembly {\\n            s := and(vs, 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)\\n            v := add(shr(255, vs), 27)\\n        }\\n        return tryRecover(hash, v, r, s);\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-recover} that receives the `r and `vs` short-signature fields separately.\\n     *\\n     * _Available since v4.2._\\n     */\\n    function recover(\\n        bytes32 hash,\\n        bytes32 r,\\n        bytes32 vs\\n    ) internal pure returns (address) {\\n        (address recovered, RecoverError error) = tryRecover(hash, r, vs);\\n        _throwError(error);\\n        return recovered;\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-tryRecover} that receives the `v`,\\n     * `r` and `s` signature fields separately.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function tryRecover(\\n        bytes32 hash,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) internal pure returns (address, RecoverError) {\\n        // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature\\n        // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines\\n        // the valid range for s in (301): 0 < s < secp256k1n \\u00f7 2 + 1, and for v in (302): v \\u2208 {27, 28}. Most\\n        // signatures from current libraries generate a unique signature with an s-value in the lower half order.\\n        //\\n        // If your library generates malleable signatures, such as s-values in the upper range, calculate a new s-value\\n        // with 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141 - s1 and flip v from 27 to 28 or\\n        // vice versa. If your library also generates signatures with 0/1 for v instead 27/28, add 27 to v to accept\\n        // these malleable signatures as well.\\n        if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {\\n            return (address(0), RecoverError.InvalidSignatureS);\\n        }\\n        if (v != 27 && v != 28) {\\n            return (address(0), RecoverError.InvalidSignatureV);\\n        }\\n\\n        // If the signature is valid (and not malleable), return the signer address\\n        address signer = ecrecover(hash, v, r, s);\\n        if (signer == address(0)) {\\n            return (address(0), RecoverError.InvalidSignature);\\n        }\\n\\n        return (signer, RecoverError.NoError);\\n    }\\n\\n    /**\\n     * @dev Overload of {ECDSA-recover} that receives the `v`,\\n     * `r` and `s` signature fields separately.\\n     */\\n    function recover(\\n        bytes32 hash,\\n        uint8 v,\\n        bytes32 r,\\n        bytes32 s\\n    ) internal pure returns (address) {\\n        (address recovered, RecoverError error) = tryRecover(hash, v, r, s);\\n        _throwError(error);\\n        return recovered;\\n    }\\n\\n    /**\\n     * @dev Returns an Ethereum Signed Message, created from a `hash`. This\\n     * produces hash corresponding to the one signed with the\\n     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]\\n     * JSON-RPC method as part of EIP-191.\\n     *\\n     * See {recover}.\\n     */\\n    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32) {\\n        // 32 is the length in bytes of hash,\\n        // enforced by the type signature above\\n        return keccak256(abi.encodePacked(\\\"\\\\x19Ethereum Signed Message:\\\\n32\\\", hash));\\n    }\\n\\n    /**\\n     * @dev Returns an Ethereum Signed Typed Data, created from a\\n     * `domainSeparator` and a `structHash`. This produces hash corresponding\\n     * to the one signed with the\\n     * https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`]\\n     * JSON-RPC method as part of EIP-712.\\n     *\\n     * See {recover}.\\n     */\\n    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32) {\\n        return keccak256(abi.encodePacked(\\\"\\\\x19\\\\x01\\\", domainSeparator, structHash));\\n    }\\n}\\n\",\"keccak256\":\"0xbc991a1cf357ce19480831a40792c814238a3b5458134703682abd8aa39719fb\",\"license\":\"MIT\"},\"contracts/reference/Sig.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n\\npragma solidity ^0.8.0;\\n\\nimport \\\"@openzeppelin/contracts/utils/cryptography/ECDSA.sol\\\";\\n\\nlibrary Sig {\\n\\n    using ECDSA for bytes32;\\n\\n    function addressHash(address _addr) public pure returns(bytes32) {\\n        return keccak256(abi.encodePacked(_addr));\\n    }\\n\\n    function ethSignedHash(address _addr) public pure returns(bytes32) {\\n        return keccak256(abi.encodePacked(_addr)).toEthSignedMessageHash();\\n    }\\n\\n    function recover(bytes32 hash, bytes memory signature) public pure returns(address) {\\n        return hash.recover(signature);\\n    }\\n\\n    function verified(bytes32 hash, bytes memory signature, address signer) public pure returns (bool){\\n        return signer == recover(hash, signature);\\n    }\\n}\\n\",\"keccak256\":\"0x4ff42be9fde5215138aec5a4fd5c356ee2c77e96fc379168bac390025a62e5a7\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x61073b61003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100555760003560e01c8062adc3821461005a57806319045a251461008057806355902dea146100ab578063b613249d146100ce575b600080fd5b61006d61006836600461063b565b6100e1565b6040519081526020015b60405180910390f35b61009361008e366004610655565b610121565b6040516001600160a01b039091168152602001610077565b6100be6100b936600461069a565b610134565b6040519015158152602001610077565b61006d6100dc36600461063b565b61015d565b6040516bffffffffffffffffffffffff19606083901b1660208201526000906034015b604051602081830303815290604052805190602001209050919050565b600061012d83836101a4565b9392505050565b60006101408484610121565b6001600160a01b0316826001600160a01b03161490509392505050565b6040516bffffffffffffffffffffffff19606083901b16602082015260009061019e90603401604051602081830303815290604052805190602001206101c8565b92915050565b60008060006101b38585610203565b915091506101c081610273565b509392505050565b6040517f19457468657265756d205369676e6564204d6573736167653a0a3332000000006020820152603c8101829052600090605c01610104565b60008082516041141561023a5760208301516040840151606085015160001a61022e8782858561047c565b9450945050505061026c565b8251604014156102645760208301516040840151610259868383610569565b93509350505061026c565b506000905060025b9250929050565b600081600481111561029557634e487b7160e01b600052602160045260246000fd5b141561029e5750565b60018160048111156102c057634e487b7160e01b600052602160045260246000fd5b14156103135760405162461bcd60e51b815260206004820152601860248201527f45434453413a20696e76616c6964207369676e6174757265000000000000000060448201526064015b60405180910390fd5b600281600481111561033557634e487b7160e01b600052602160045260246000fd5b14156103835760405162461bcd60e51b815260206004820152601f60248201527f45434453413a20696e76616c6964207369676e6174757265206c656e67746800604482015260640161030a565b60038160048111156103a557634e487b7160e01b600052602160045260246000fd5b14156103fe5760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202773272076616c604482015261756560f01b606482015260840161030a565b600481600481111561042057634e487b7160e01b600052602160045260246000fd5b14156104795760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202776272076616c604482015261756560f01b606482015260840161030a565b50565b6000807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a08311156104b35750600090506003610560565b8460ff16601b141580156104cb57508460ff16601c14155b156104dc5750600090506004610560565b6040805160008082526020820180845289905260ff881692820192909252606081018690526080810185905260019060a0016020604051602081039080840390855afa158015610530573d6000803e3d6000fd5b5050604051601f1901519150506001600160a01b03811661055957600060019250925050610560565b9150600090505b94509492505050565b6000806001600160ff1b03831660ff84901c601b0161058a8782888561047c565b935093505050935093915050565b80356001600160a01b03811681146105af57600080fd5b919050565b600082601f8301126105c4578081fd5b813567ffffffffffffffff808211156105df576105df6106ef565b604051601f8301601f19908116603f01168101908282118183101715610607576106076106ef565b8160405283815286602085880101111561061f578485fd5b8360208701602083013792830160200193909352509392505050565b60006020828403121561064c578081fd5b61012d82610598565b60008060408385031215610667578081fd5b82359150602083013567ffffffffffffffff811115610684578182fd5b610690858286016105b4565b9150509250929050565b6000806000606084860312156106ae578081fd5b83359250602084013567ffffffffffffffff8111156106cb578182fd5b6106d7868287016105b4565b9250506106e660408501610598565b90509250925092565b634e487b7160e01b600052604160045260246000fdfea2646970667358221220794ef73492a65942eb5bd90f1f5250e89c949c13bc78fc0c3b00fd74808a4c1664736f6c63430008040033",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600436106100555760003560e01c8062adc3821461005a57806319045a251461008057806355902dea146100ab578063b613249d146100ce575b600080fd5b61006d61006836600461063b565b6100e1565b6040519081526020015b60405180910390f35b61009361008e366004610655565b610121565b6040516001600160a01b039091168152602001610077565b6100be6100b936600461069a565b610134565b6040519015158152602001610077565b61006d6100dc36600461063b565b61015d565b6040516bffffffffffffffffffffffff19606083901b1660208201526000906034015b604051602081830303815290604052805190602001209050919050565b600061012d83836101a4565b9392505050565b60006101408484610121565b6001600160a01b0316826001600160a01b03161490509392505050565b6040516bffffffffffffffffffffffff19606083901b16602082015260009061019e90603401604051602081830303815290604052805190602001206101c8565b92915050565b60008060006101b38585610203565b915091506101c081610273565b509392505050565b6040517f19457468657265756d205369676e6564204d6573736167653a0a3332000000006020820152603c8101829052600090605c01610104565b60008082516041141561023a5760208301516040840151606085015160001a61022e8782858561047c565b9450945050505061026c565b8251604014156102645760208301516040840151610259868383610569565b93509350505061026c565b506000905060025b9250929050565b600081600481111561029557634e487b7160e01b600052602160045260246000fd5b141561029e5750565b60018160048111156102c057634e487b7160e01b600052602160045260246000fd5b14156103135760405162461bcd60e51b815260206004820152601860248201527f45434453413a20696e76616c6964207369676e6174757265000000000000000060448201526064015b60405180910390fd5b600281600481111561033557634e487b7160e01b600052602160045260246000fd5b14156103835760405162461bcd60e51b815260206004820152601f60248201527f45434453413a20696e76616c6964207369676e6174757265206c656e67746800604482015260640161030a565b60038160048111156103a557634e487b7160e01b600052602160045260246000fd5b14156103fe5760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202773272076616c604482015261756560f01b606482015260840161030a565b600481600481111561042057634e487b7160e01b600052602160045260246000fd5b14156104795760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202776272076616c604482015261756560f01b606482015260840161030a565b50565b6000807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a08311156104b35750600090506003610560565b8460ff16601b141580156104cb57508460ff16601c14155b156104dc5750600090506004610560565b6040805160008082526020820180845289905260ff881692820192909252606081018690526080810185905260019060a0016020604051602081039080840390855afa158015610530573d6000803e3d6000fd5b5050604051601f1901519150506001600160a01b03811661055957600060019250925050610560565b9150600090505b94509492505050565b6000806001600160ff1b03831660ff84901c601b0161058a8782888561047c565b935093505050935093915050565b80356001600160a01b03811681146105af57600080fd5b919050565b600082601f8301126105c4578081fd5b813567ffffffffffffffff808211156105df576105df6106ef565b604051601f8301601f19908116603f01168101908282118183101715610607576106076106ef565b8160405283815286602085880101111561061f578485fd5b8360208701602083013792830160200193909352509392505050565b60006020828403121561064c578081fd5b61012d82610598565b60008060408385031215610667578081fd5b82359150602083013567ffffffffffffffff811115610684578182fd5b610690858286016105b4565b9150509250929050565b6000806000606084860312156106ae578081fd5b83359250602084013567ffffffffffffffff8111156106cb578182fd5b6106d7868287016105b4565b9250506106e660408501610598565b90509250925092565b634e487b7160e01b600052604160045260246000fdfea2646970667358221220794ef73492a65942eb5bd90f1f5250e89c949c13bc78fc0c3b00fd74808a4c1664736f6c63430008040033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

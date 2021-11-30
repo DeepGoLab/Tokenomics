@@ -1,0 +1,26 @@
+node_modules
+.env
+coverage
+coverage.json
+typechain
+data
+
+#Hardhat files
+cache
+artifacts
+
+# push abi to server
+update-contracts.py
+
+# test 
+sig.py
+test_mint_verify.js
+
+# tmp
+0_deploy_DeepGoNFTVerify.js
+
+# debug
+debug
+
+# ignore
+.DS_Store
