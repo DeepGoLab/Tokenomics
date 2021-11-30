@@ -4,6 +4,20 @@ coverage
 coverage.json
 typechain
 data
+.env.example
+.eslintignore
+.eslintrc.js
+.npmignore
+.prettierignore
+.solhint.json
+.solhintignore
+deploy_all
+scripts
+tenderly.yaml
+package-lock.json
+tsconfig.json
+yarn-error.log
+
 
 #Hardhat files
 cache
