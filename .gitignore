@@ -4,6 +4,7 @@ coverage
 coverage.json
 typechain
 data
+deployments
 .env.example
 .eslintignore
 .eslintrc.js
