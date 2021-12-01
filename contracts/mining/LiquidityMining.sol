@@ -301,10 +301,4 @@ contract LiquidityMining is AccessControl {
             ts.transferDGT(_to, _amount);
         }
     }
-
-    // UPDATE | DEV ADDRESS | DEV-ONLY
-    function dev(address _devaddr) public notZeroAddress(_devaddr) {
-        require(msg.sender == ts.getDevaddr(), "dev: wut?");
-        ts.setDevaddr(_devaddr);
-    }
 }

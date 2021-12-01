@@ -10,23 +10,13 @@ pragma solidity ^0.8.0;
 contract Treasury is AccessControl{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-    // 合约owner
-    address private devaddr;
-    // 收取挖矿费率的财务部门地址
+
     address private treasury;
-    // DGT合约交互地址
     IERC20 private DGT;
-    // NFT合约交互地址
     VoyagerStorage private NFT;
-    // todo：奖励截止时间：使用blocktime
     uint256 private bonusEndBlock;
-    // todo：每个block分发的DGT数量
-    // polygon上Staking挖矿和流动性挖矿的总量: 
-    // 首月 - staking(25wDGT) + 流动性挖矿(25wDGT): 0.4 DGT/perblock
     uint256 private DGTPerBlock;
 
-    // staking收益Level分层
-    // todo: 数值设定从整数开始
     mapping (uint256 => uint256) public weightOfLevel;
     mapping (address => uint256) public stakeShareOf;
     mapping (address => uint256) public stakeTokenId;
@@ -36,18 +26,7 @@ contract Treasury is AccessControl{
     struct UserInfo {
         uint256 amount;     // How many tokens the user has provided.
         uint256 rewardDebt; // Reward debt. See explanation below.
-        // uint256 maxLevel;
         uint256 share;      // set for staking mining
-        //
-        // The pending DGT entitled to a user is referred to as the pending reward:
-        //   每次有份额加入或退出时，对收益进行结算
-        //   pending reward = (user.amount * pool.accDGTPerShare) - user.rewardDebt ( - user.taxedAmount)
-        //
-        // Upon deposit and withdraw, the following occur:
-        //   1. The pool's `accDGTPerShare` (and `lastRewardBlock`) gets updated.
-        //   2. User receives the pending reward sent to his/her address.
-        //   3. User's `amount` gets updated and taxed as 'taxedAmount'.
-        //   4. User's `rewardDebt` gets updated.
     }
 
     // INFO | POOL VARIABLES
@@ -73,8 +52,6 @@ contract Treasury is AccessControl{
     ) {
         DGT = IERC20(_DGT);
         NFT = VoyagerStorage(NFT_);
-        // treasury = _treasury;
-        devaddr = msg.sender;
         DGTPerBlock = _DGTPerBlock;
         startBlock = _startBlock;
         bonusEndBlock = _bonusEndBlock;
@@ -89,14 +66,6 @@ contract Treasury is AccessControl{
 
     function setWeightOfLevel(uint level, uint weight) public onlyOwner {
         weightOfLevel[level] = weight;
-    }
-
-    function getDevaddr() external view returns (address) {
-        return devaddr;
-    }
-
-    function setDevaddr(address _addr) public onlyProxy notZeroAddress(_addr) {
-        devaddr = _addr;
     }
 
     function setStakeTokenId(address _user, uint _tokenId) public onlyProxy {
@@ -143,10 +112,6 @@ contract Treasury is AccessControl{
         return userInfo[_pid][_user];
     }
 
-    // function getUserMaxLevel(uint _pid, address _user) public view returns (uint) {
-    //     return userInfo[_pid][_user].maxLevel;
-    // }
-
     function setTotalStakeShare(uint _value) public onlyProxy {
         totalStakeShare = _value;
     } 
@@ -176,10 +141,6 @@ contract Treasury is AccessControl{
                             .sub(getUserInfo(_pid, _addr).rewardDebt);
         }
     }
-
-    // function setUserMaxLevel(uint _pid, address _user, uint _maxLevel) public onlyProxy {
-    //     userInfo[_pid][_user].maxLevel = _maxLevel;
-    // }
 
     function setAccDGTPerShare(uint _pid, uint _accDGTPerShare)  public onlyProxy {
         poolInfo[_pid].accDGTPerShare = _accDGTPerShare;
@@ -255,7 +216,7 @@ contract Treasury is AccessControl{
         }
     }
 
-    // VIEW | PENDING REWARD，返回用户当前的未提取收益
+    // VIEW | PENDING REWARD
     function pendingDGT(uint256 _pid, address _user) external view returns (uint256) {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
