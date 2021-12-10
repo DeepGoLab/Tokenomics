@@ -74,17 +74,8 @@
 //       this.voyager = await ethers.getContractAt('Voyager', 
 //                                             voyager.address);
 //       console.log('voyager address is: '+this.voyager.address)
-
-//       // deploy voyagerLogic
-//       const VoyagerLogic = await ethers.getContractFactory("VoyagerLogic");
-//       const voyagerLogic = await VoyagerLogic.deploy();
-//       this.voyagerLogic = await ethers.getContractAt('VoyagerLogic', 
-//                                             voyagerLogic.address);
-//       console.log('voyagerLogic address is: '+this.voyagerLogic.address)
       
 //       this.tx = await this.voyagerStorage.setProxy(this.voyager.address)
-//       await this.tx.wait()
-//       this.tx = await voyager.initialize(this.voyagerLogic.address)
 //       await this.tx.wait()
 
 //       this.tx = await this.voyager.setFee1TokenAddress(this.dgtAddress)

@@ -68,7 +68,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
     } 
 
     modifier activeMine() {
-        require(mineIsActive, "Unactive to mint");
+        require(mineIsActive, "Unactive to mine");
         _;
     } 
     

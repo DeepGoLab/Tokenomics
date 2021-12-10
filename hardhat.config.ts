@@ -20,9 +20,6 @@ const accounts = {
 
 const config: HardhatUserConfig = {
   defaultNetwork: "localhost",
-  // etherscan: {
-  //   apiKey: "I1XARY6KY6166B639M1PEQUCU3XT9VJ3PZ",
-  // },
   networks: {
     hardhat: {
     },
@@ -107,7 +104,7 @@ const config: HardhatUserConfig = {
   },
   tenderly : {
     username: 'DeepGo',
-    project: 'test'
+    project: 'Tokenomics'
   }
 };
 

@@ -21,6 +21,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     mapping(uint256 => string) private _tokenURIs;
     mapping(uint256 => mapping(uint256 => bool)) public setByOwner;
     mapping(address => uint256) private _tokenIDWithoutURI;
+    mapping(address => uint256) private _mintTokenIDWithoutURI;
     mapping (address => bool) private _expiredWhitelist; 
 
     uint256 private _maxWhitelisted = 1000;
@@ -102,12 +103,27 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         return _tokenIDWithoutURI[_addr];
     }
 
+    function getMintTokenIDWithoutURI(
+        address _addr
+    ) public view returns (uint256) 
+    {
+        return _mintTokenIDWithoutURI[_addr];
+    }
+
+    function setMintTokenIDWithoutURI(
+        address _addr, 
+        uint256 _tokenId
+    ) public onlyProxy 
+    {
+        _mintTokenIDWithoutURI[_addr] = _tokenId;
+    }
+
     function setTokenIDWithoutURI(
         address _addr, 
         uint256 _tokenId
     ) public onlyProxy 
     {
-        _tokenIDWithoutURI[_addr] = _tokenId;
+        _mintTokenIDWithoutURI[_addr] = _tokenId;
     }
 
     function getMaxWhitelisted() public view returns (uint256) {
@@ -201,7 +217,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         tokenLevelCount[_addr][_level] = _amount;
     }
 
-    function mintVoyayer(
+    function mintVoyager(
         address _addr, 
         uint256 _tokenId
     ) external onlyProxy 

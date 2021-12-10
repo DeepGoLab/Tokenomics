@@ -15,6 +15,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
 
   Counters.Counter private _itemIds;
   Counters.Counter private _itemsSold;
+  Counters.Counter private _itemsCanceled;
 
   struct MarketItem {
     uint itemId;
@@ -43,6 +44,12 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
   event CreateMarketSale (
     address indexed nftContract,
     address indexed buyer,
+    uint256 indexed itemId
+  );
+
+  event CancelMarketSale(
+    address indexed nftContract,
+    address indexed owner,
     uint256 indexed itemId
   );
 
@@ -129,13 +136,13 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
 
   /* Creates the sale of a marketplace item */
   function createMarketSale(
-    address nftContract,
     uint256 itemId
   ) public payable nonReentrant {
     uint price = idToMarketItem[itemId].price;
     uint tokenId = idToMarketItem[itemId].tokenId;
-
     address quoteTokenContract = idToMarketItem[itemId].quoteTokenContract;
+    address nftContract = idToMarketItem[itemId].nftContract;
+
     if (quoteTokenContract == address(0)) {
         require(msg.value == price, "Please submit the asking price in order to complete the purchase");
         payable(idToMarketItem[itemId].seller).transfer(msg.value);
@@ -155,15 +162,36 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     );
   }
 
-  /* Returns all unsold market items */
+  /* Cancels the sale of a marketplace item */
+  function cancelMarketSale(
+    uint256 itemId
+  ) public nonReentrant {
+    require(idToMarketItem[itemId].seller == msg.sender &&
+            idToMarketItem[itemId].owner == address(0), "Invalid seller");
+    uint tokenId = idToMarketItem[itemId].tokenId;
+    address nftContract = idToMarketItem[itemId].nftContract;
+    IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId);
+    idToMarketItem[itemId].seller = address(0);
+    idToMarketItem[itemId].owner = msg.sender;
+    _itemsCanceled.increment();
+    
+    emit CancelMarketSale(
+      nftContract,
+      msg.sender,
+      itemId
+    );
+  }
+
+  /* Returns all unsold & uncancelled market items */
   function fetchUnsoldItems() public view returns (MarketItem[] memory) {
     uint itemCount = _itemIds.current();
-    uint unsoldItemCount = _itemIds.current() - _itemsSold.current();
+    uint unsoldItemCount = _itemIds.current() - _itemsSold.current() - _itemsCanceled.current();
     uint currentIndex = 0;
 
     MarketItem[] memory items = new MarketItem[](unsoldItemCount);
     for (uint i = 0; i < itemCount; i++) {
-      if (idToMarketItem[i + 1].owner == address(0)) {
+      if (idToMarketItem[i + 1].owner == address(0) && 
+          idToMarketItem[i + 1].seller != address(0)) {
         uint currentId = i + 1;
         MarketItem storage currentItem = idToMarketItem[currentId];
         items[currentIndex] = currentItem;
@@ -176,12 +204,12 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
   /* Returns all sold market items */
   function fetchSoldItems() public view returns (MarketItem[] memory) {
     uint itemCount = _itemIds.current();
-    uint unsoldItemCount = _itemIds.current() - _itemsSold.current();
+    uint unsoldItemCount = _itemsSold.current();
     uint currentIndex = 0;
 
     MarketItem[] memory items = new MarketItem[](unsoldItemCount);
     for (uint i = 0; i < itemCount; i++) {
-      if (idToMarketItem[i + 1].owner != address(0)) {
+      if (idToMarketItem[i + 1].sold == true) {
         uint currentId = i + 1;
         MarketItem storage currentItem = idToMarketItem[currentId];
         items[currentIndex] = currentItem;
@@ -198,7 +226,8 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     uint currentIndex = 0;
 
     for (uint i = 0; i < totalItemCount; i++) {
-      if (idToMarketItem[i + 1].owner == _owner) {
+      if (idToMarketItem[i + 1].seller == _owner &&
+          idToMarketItem[i + 1].owner == address(0)) {
         itemCount += 1;
       }
     }
@@ -226,7 +255,8 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     uint currentIndex = 0;
 
     for (uint i = 0; i < totalItemCount; i++) {
-      if (idToMarketItem[i + 1].owner == _owner) {
+      if (idToMarketItem[i + 1].seller == _owner &&
+        idToMarketItem[i + 1].owner != address(0)) {
         itemCount += 1;
       }
     }
@@ -254,14 +284,16 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     uint currentIndex = 0;
 
     for (uint i = 0; i < totalItemCount; i++) {
-      if (idToMarketItem[i + 1].owner == _owner) {
+      if (idToMarketItem[i + 1].seller != address(0) &&
+          idToMarketItem[i + 1].owner == _owner) {
         itemCount += 1;
       }
     }
 
     MarketItem[] memory items = new MarketItem[](itemCount);
     for (uint i = 0; i < totalItemCount; i++) {
-      if (idToMarketItem[i + 1].owner == _owner) {
+      if (idToMarketItem[i + 1].seller != address(0) &&
+          idToMarketItem[i + 1].owner == _owner) {
         uint currentId = i + 1;
         MarketItem storage currentItem = idToMarketItem[currentId];
         items[currentIndex] = currentItem;
@@ -271,21 +303,23 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     return items;
   }
 
-  /* Returns only items a user has created */
-  function fetchItemsCreated() public view returns (MarketItem[] memory) {
+  /* Returns only items a user has cancel */
+  function fetchItemsCancel() public view returns (MarketItem[] memory) {
     uint totalItemCount = _itemIds.current();
     uint itemCount = 0;
     uint currentIndex = 0;
 
     for (uint i = 0; i < totalItemCount; i++) {
-      if (idToMarketItem[i + 1].seller == msg.sender) {
+      if (idToMarketItem[i + 1].seller == address(0) &&
+          idToMarketItem[i + 1].owner == msg.sender) {
         itemCount += 1;
       }
     }
 
     MarketItem[] memory items = new MarketItem[](itemCount);
     for (uint i = 0; i < totalItemCount; i++) {
-      if (idToMarketItem[i + 1].seller == msg.sender) {
+      if (idToMarketItem[i + 1].seller == address(0) &&
+          idToMarketItem[i + 1].owner == msg.sender) {
         uint currentId = i + 1;
         MarketItem storage currentItem = idToMarketItem[currentId];
         items[currentIndex] = currentItem;

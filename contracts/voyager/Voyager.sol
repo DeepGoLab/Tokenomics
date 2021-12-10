@@ -28,19 +28,21 @@ contract Voyager is AccessControl, Pausable {
         bytes memory signature
     ) external sigVerified(signature) activeMint whenNotPaused nonReentrant
     {
-        require(vS.getTokenIDWithoutURI(msg.sender) == 0, "Set tokenURI first");
+        require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
+                vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set mintTokenURI first");
         require(!vS.getExpiredWhitelist(msg.sender), "Expired");
         require(vS.getWhitelistExpired().add(1) <= vS.getMaxWhitelisted(), 
                                             "Mint over max supply of Voyagers");
         
         uint256 tokenID = vS.getTotalMinted();
         
-        vS.mintVoyayer(msg.sender, tokenID);
+        vS.mintVoyager(msg.sender, tokenID);
         
         if (tokenID == 0) {
             vS._setTokenURI(tokenID, vS.getToken0URI());
         } else {
-            vS.setTokenIDWithoutURI(msg.sender, tokenID);
+            vS.setMintTokenIDWithoutURI(msg.sender, tokenID);
         }
         
         vS.setTotalMinted(vS.getTotalMinted().add(1));
@@ -50,7 +52,9 @@ contract Voyager is AccessControl, Pausable {
 
     function mintVoyager() external activeMint whenNotPaused nonReentrant
     {
-        require(vS.getTokenIDWithoutURI(msg.sender) == 0, "Set tokenURI first");
+        require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
+                vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set mintTokenURI first");
         
         (uint256 fee1, uint256 fee2) = vS.getMintFee();
 
@@ -63,12 +67,12 @@ contract Voyager is AccessControl, Pausable {
         IERC20(vS.dspAddress()).safeTransferFrom(msg.sender, address(this), fee2);
 
         uint256 tokenID = vS.getTotalMinted();
-        vS.mintVoyayer(msg.sender, tokenID);
+        vS.mintVoyager(msg.sender, tokenID);
         
         if (tokenID == 0) {
             vS._setTokenURI(tokenID, vS.getToken0URI());
         } else {
-            vS.setTokenIDWithoutURI(msg.sender, tokenID);
+            vS.setMintTokenIDWithoutURI(msg.sender, tokenID);
         }
         
         vS.setTotalMinted(vS.getTotalMinted().add(1));
@@ -79,7 +83,9 @@ contract Voyager is AccessControl, Pausable {
     ) public whenNotPaused nonReentrant
     {
         require(tokenID != 0, "Not 0 token");
-        require(vS.getTokenIDWithoutURI(msg.sender) == 0, "Unvalid token");
+        require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
+                vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set tokenURI first");
         require(vS.getVoyager(vS.getAllVoyagerIndex(tokenID)).level < vS.maxLevel(), 
                                                           "Already max level");
 
@@ -113,9 +119,12 @@ contract Voyager is AccessControl, Pausable {
         uint256 _tokenid, 
         uint256 _level, 
         string memory _tokenURI
-    ) public onlyAdmin 
+    ) public onlyAdmin whenNotPaused
     {
         uint256 tokenID = vS.getTokenIDWithoutURI(_user);
+        if (tokenID == 0) {
+            tokenID = vS.getMintTokenIDWithoutURI(_user);
+        }
         uint256 level = vS.getVoyager(vS.getAllVoyagerIndex(tokenID)).level;
 
         require(tokenID > 0, "Unvalid token");
@@ -126,20 +135,21 @@ contract Voyager is AccessControl, Pausable {
         vS._setTokenURI(tokenID, _tokenURI);
 
         vS.setTokenIDWithoutURI(_user, 0);
+        vS.setMintTokenIDWithoutURI(_user, 0);
         vS.setSetByOwner(tokenID, level, true);
     }
 
     function changeTokenURI(
         uint256 tokenID, 
         string memory _tokenURI
-    ) public onlyAdmin 
+    ) public onlyAdmin whenNotPaused
     {
         vS._setTokenURI(tokenID, _tokenURI);
     }
 
     function setToken0URI(
         string memory _tokenURI
-    ) public onlyAdmin 
+    ) public onlyAdmin whenNotPaused
     {
         vS.token0URI(_tokenURI);
     }

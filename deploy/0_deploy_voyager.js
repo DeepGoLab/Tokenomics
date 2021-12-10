@@ -3,7 +3,7 @@ require('dotenv').config();
 require("@tenderly/hardhat-tenderly");
 // const hre = require("@nomiclabs/hardhat");
 
-module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
+module.exports = async function ({ tenderly, ethers, getNamedAccounts, deployments }) {
     const { deploy } = deployments
     const { deployer } = await getNamedAccounts()
     const signer = process.env.OWNER_PRIVATE_KEY
@@ -22,14 +22,6 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
 
     // todo：设置升级费用
     const sig = await ethers.getContract("Sig")
-
-    await deploy("VoyagerLogic", {
-        from: deployer,
-        log: true,
-        deterministicDeployment: false
-    })
-
-    const voyagerLogic = await ethers.getContract("VoyagerLogic")
 
     await deploy("VoyagerStorage", {
         from: deployer,
@@ -53,12 +45,6 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
     this.tx =await voyagerStorage.setProxy(voyager.address)
     await this.tx.wait()
 
-    // for (let i=0; i<maxLevel; i++) {
-    //     await voyagerStorage.setLevelUpFee(i+1, levelUpFee[2*i], levelUpFee[2*i+1]);
-    // }
-
-    this.tx= await voyager.initialize(voyagerLogic.address)
-    await this.tx.wait()
     this.tx = await voyager.setFee1TokenAddress(dgt)
     await this.tx.wait();
     this.tx = await voyager.setFee2TokenAddress('0xa1041fB61fd3FE7B3337D06959A615A7d4b46F9f')
@@ -78,11 +64,20 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments }) {
     await this.tx.wait();
     console.log('mint first NFT finished')
     
+    // await tenderly.push({
+    //     name: 'Voyager',
+    //     address: voyager.address,
+    //   });
 
-    // // todo: tranfer admin
-    // this.tx = await voyager.transferAdmin(ADMIN)
-    // await this.tx.wait()
-    // console.log('voyager transfer admin finished')
+    // await tenderly.push({
+    //     name: 'VoyagerStorage',
+    //     address: voyagerStorage.address,
+    //   });
+
+    // todo: tranfer admin
+    this.tx = await voyager.transferAdmin(ADMIN)
+    await this.tx.wait()
+    console.log('voyager transfer admin finished')
 
     // // push to tenderly
     // const contracts = [
