@@ -49,6 +49,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 _maxLevel
     ) ERC721("Voyager", "VOG")  
     {
+        require(_maxLevel <= levelUpDGT.length && _maxLevel <= levelUpDSP.length, "_maxLevel is too large.");
         maxLevel = _maxLevel;
         initialLevelUpFees();
     }
@@ -141,7 +142,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 _tokenId
     ) public onlyProxy 
     {
-        _mintTokenIDWithoutURI[_addr] = _tokenId;
+        _tokenIDWithoutURI[_addr] = _tokenId;
 
         emit SetTokenIDWithoutURI(_addr, _tokenId);
     }
@@ -262,7 +263,9 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 _tokenId
     ) external 
     {
-        require(getTokenIDWithoutURI(msg.sender) == 0, "Set tokenURI first");
+        require(getTokenIDWithoutURI(msg.sender) == 0  &&
+                getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set tokenURI first");
         _safeTransfer(msg.sender, _to, _tokenId, "");
     }
 
