@@ -89,7 +89,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
     /*
     * Pause sale if active, make active if paused
     */
-    function flipMintableState() public onlyAdmin {
+    function flipMintableState() public onlyOwner {
         mintIsActive = !mintIsActive;
     }
 }

@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "./HasAdmin.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract HasMinters is HasAdmin {
+contract HasMinters is Ownable {
   event MinterAdded(address indexed _minter);
   event MinterRemoved(address indexed _minter);
 
@@ -58,5 +58,9 @@ contract HasMinters is HasAdmin {
 
   function isMinter(address _addr) public view returns (bool) {
     return minter[_addr];
+  }
+
+  function getMinters() public view returns (address[] memory) {
+    return minters;
   }
 }
