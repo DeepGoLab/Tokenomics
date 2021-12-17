@@ -14,6 +14,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
     event SetProxy(address proxy);
     event AdminTransferred(address oldAdmin, address newAdmin);
     event FlipMintableState(bool mintIsActive);
+    event FlipMineState(bool mineIsActive);
 
     address private _admin;
     address public proxy;
@@ -97,5 +98,11 @@ contract AccessControl is Ownable, ReentrancyGuard {
         mintIsActive = !mintIsActive;
 
         emit FlipMintableState(mintIsActive);
+    }
+
+    function flipMineState() external onlyOwner {
+        mineIsActive = !mineIsActive;
+
+        emit FlipMineState(mineIsActive);
     }
 }
