@@ -82,7 +82,7 @@ contract Voyager is AccessControl, Pausable {
         uint256 tokenID
     ) external whenNotPaused nonReentrant
     {
-        require(tokenID != 0, "Not 0 token");
+        require(tokenID != 0, "TokenID Should Not Be 0");
         require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
                 vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
                 "Set tokenURI first");
@@ -170,7 +170,7 @@ contract Voyager is AccessControl, Pausable {
     }
 
     function withdrawDGT(uint256 _amount, address _to) external onlyOwner whenNotPaused nonReentrant {
-        require(IERC20(vS.dgtAddress()).balanceOf(msg.sender) >= _amount, "Insufficient balance");
+        require(IERC20(vS.dgtAddress()).balanceOf(address(this)) >= _amount, "Insufficient balance");
         IERC20(vS.dgtAddress()).transfer(_to, _amount);
     }
 
