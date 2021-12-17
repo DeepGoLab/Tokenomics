@@ -25,7 +25,6 @@ contract Treasury is AccessControl{
     event SetSingleAllocPoint(uint pid, uint value);
     event AddPool(PoolInfo pool);
 
-    address private treasury;
     IERC20 private DGT;
     VoyagerStorage private NFT;
     uint256 private bonusEndBlock;
@@ -244,15 +243,14 @@ contract Treasury is AccessControl{
 
     // RETURN | REWARD MULTIPLIER OVER GIVEN BLOCK RANGE | INCLUDES START BLOCK
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
+        require(_from <= _to, "_from must less than _to");
         _from = _from >= startBlock ? _from : startBlock;
         if (_to <= bonusEndBlock) {
             return _to.sub(_from);
         } else if (_from >= bonusEndBlock) {
-            return _to.sub(_from);
+            return 0;
         } else {
-            return bonusEndBlock.sub(_from).add(
-                _to.sub(bonusEndBlock)
-            );
+            return bonusEndBlock.sub(_from);
         }
     }
 
@@ -261,12 +259,13 @@ contract Treasury is AccessControl{
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accDGTPerShare = pool.accDGTPerShare;
-        uint256 lpSupply = pool.token.balanceOf(address(this));
+        uint256 lpSupply = _pid>0? pool.token.balanceOf(address(this)) : totalStakeShare;
+        uint256 userShare = _pid>0? user.amount : user.share;
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
             uint256 DGTReward = multiplier.mul(DGTPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
             accDGTPerShare = accDGTPerShare.add(DGTReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accDGTPerShare).div(1e12).sub(user.rewardDebt);
+        return userShare.mul(accDGTPerShare).div(1e12).sub(user.rewardDebt);
     }
 }
