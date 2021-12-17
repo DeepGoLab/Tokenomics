@@ -57,7 +57,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     address nftContract,
     uint256 tokenId,
     uint256 price
-  ) public nonReentrant
+  ) external nonReentrant
   {
     require(price > 0, "Price must be at least 1 wei");
 
@@ -95,7 +95,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     address quoteTokenContract,
     uint256 tokenId,
     uint256 price
-  ) public onlyQuoteToken(quoteTokenContract) nonReentrant {
+  ) external onlyQuoteToken(quoteTokenContract) nonReentrant {
     require(price > 0, "Price must be at least 1 wei");
 
     _itemIds.increment();
@@ -137,7 +137,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
   /* Creates the sale of a marketplace item */
   function createMarketSale(
     uint256 itemId
-  ) public payable nonReentrant {
+  ) external payable nonReentrant {
     uint price = idToMarketItem[itemId].price;
     uint tokenId = idToMarketItem[itemId].tokenId;
     address quoteTokenContract = idToMarketItem[itemId].quoteTokenContract;

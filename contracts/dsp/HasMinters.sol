@@ -30,7 +30,7 @@ contract HasMinters is Ownable {
     }
   }
 
-  function removeMinters(address[] memory _removedMinters) public onlyOwner {
+  function removeMinters(address[] memory _removedMinters) external onlyOwner {
     address _minter;
 
     for (uint256 i = 0; i < _removedMinters.length; i++) {

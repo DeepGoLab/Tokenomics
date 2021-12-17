@@ -80,7 +80,7 @@ contract Voyager is AccessControl, Pausable {
 
     function levelUp(
         uint256 tokenID
-    ) public whenNotPaused nonReentrant
+    ) external whenNotPaused nonReentrant
     {
         require(tokenID != 0, "Not 0 token");
         require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
@@ -119,7 +119,7 @@ contract Voyager is AccessControl, Pausable {
         uint256 _tokenid, 
         uint256 _level, 
         string memory _tokenURI
-    ) public onlyAdmin whenNotPaused
+    ) external onlyAdmin whenNotPaused
     {
         uint256 tokenID = vS.getTokenIDWithoutURI(_user);
         if (tokenID == 0) {
@@ -142,39 +142,39 @@ contract Voyager is AccessControl, Pausable {
     function changeTokenURI(
         uint256 tokenID, 
         string memory _tokenURI
-    ) public onlyAdmin whenNotPaused
+    ) external onlyAdmin whenNotPaused
     {
         vS._setTokenURI(tokenID, _tokenURI);
     }
 
     function setToken0URI(
         string memory _tokenURI
-    ) public onlyAdmin whenNotPaused
+    ) external onlyAdmin whenNotPaused
     {
         vS.token0URI(_tokenURI);
     }
 
     function setFee1TokenAddress(
         address _token1
-    ) public onlyOwner whenNotPaused notZeroAddress(_token1) nonReentrant
+    ) external onlyOwner whenNotPaused notZeroAddress(_token1) nonReentrant
     {
         vS.setFee1TokenAddress(_token1);
     }
 
     function setFee2TokenAddress(
         address _token2
-    ) public onlyOwner whenNotPaused notZeroAddress(_token2) nonReentrant
+    ) external onlyOwner whenNotPaused notZeroAddress(_token2) nonReentrant
     {
         vS.setFee2TokenAddress(_token2);
         dsp = DeepSeaPlankton(_token2);
     }
 
-    function withdrawDGT(uint256 _amount, address _to) public onlyOwner whenNotPaused nonReentrant {
+    function withdrawDGT(uint256 _amount, address _to) external onlyOwner whenNotPaused nonReentrant {
         require(IERC20(vS.dgtAddress()).balanceOf(msg.sender) >= _amount, "Insufficient balance");
         IERC20(vS.dgtAddress()).transfer(_to, _amount);
     }
 
-    function burnDSP() public onlyOwner whenNotPaused nonReentrant {
+    function burnDSP() external onlyOwner whenNotPaused nonReentrant {
         dsp.burn(IERC20(vS.dspAddress()).balanceOf(address(this)));
     }    
     

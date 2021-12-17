@@ -57,7 +57,7 @@ contract LiquidityMining is AccessControl {
         ts.setUserShare(0, msg.sender, curUserShare);   
     }
 
-    function stakeNFT(uint tokenId) public {
+    function stakeNFT(uint tokenId) external {
         require(ts.stakeTokenId(msg.sender) == 0 ,"NFT Already staked");
 
         ts.setStakeTokenId(msg.sender, tokenId);
@@ -80,7 +80,7 @@ contract LiquidityMining is AccessControl {
         ts.setUserRewardDebt(0, msg.sender, _rewardDebt);          
     }
 
-    function unstakeNFT() public {
+    function unstakeNFT() external {
         require(ts.stakeTokenId(msg.sender) > 0 ,"No NFT staked");
 
         uint tokenId = ts.stakeTokenId(msg.sender);

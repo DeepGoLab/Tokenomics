@@ -72,7 +72,7 @@ contract Treasury is AccessControl{
         console.log("treasury deploy success");
     }
 
-    function initializeWeightOfLevel(uint _maxLevel) public onlyOwner {
+    function initializeWeightOfLevel(uint _maxLevel) external onlyOwner {
         for (uint level=0; level < _maxLevel+1; level++) {
             weightOfLevel[level] = 1;
         }
@@ -80,7 +80,7 @@ contract Treasury is AccessControl{
         emit InitializeWeightOfLevel(_maxLevel);
     }
 
-    function setWeightOfLevel(uint level, uint weight) public onlyOwner {
+    function setWeightOfLevel(uint level, uint weight) external onlyOwner {
         weightOfLevel[level] = weight;
 
         emit SetWeightOfLevel(level, weight);
@@ -138,7 +138,7 @@ contract Treasury is AccessControl{
         emit SetTotalStakeShare(_value);
     } 
 
-    function setStakeShareOfUser(address _user, uint _share) public onlyProxy {
+    function setStakeShareOfUser(address _user, uint _share) external onlyProxy {
         stakeShareOf[_user] = _share;
 
         emit SetStakeShareOfUser(_user, _share);
@@ -222,11 +222,11 @@ contract Treasury is AccessControl{
         NFT.transferVoyager(to_, tokenId_);
     }
 
-    function withdrawNFT(address to_, uint tokenId_) public onlyOwner {
+    function withdrawNFT(address to_, uint tokenId_) external onlyOwner {
         NFT.transferVoyager(to_, tokenId_);
     }
 
-    function withdrawDGT(uint value_) public onlyOwner {
+    function withdrawDGT(uint value_) external onlyOwner {
         if ( DGT.balanceOf(address(this)) < value_) {
             value_ = DGT.balanceOf(address(this));
         }

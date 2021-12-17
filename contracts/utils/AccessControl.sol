@@ -85,7 +85,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
      * @dev Transfers ownership of the contract to a new account (`newAdmin`).
      * Can only be called by the current admin.
      */
-    function transferAdmin(address newAdmin) public virtual onlyOwner {
+    function transferAdmin(address newAdmin) external virtual onlyOwner {
         require(newAdmin != address(0), "Invalid Admin: new admin is the zero address");
         _setAdmin(newAdmin);
     }
@@ -93,7 +93,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
     /*
     * Pause sale if active, make active if paused
     */
-    function flipMintableState() public onlyOwner {
+    function flipMintableState() external onlyOwner {
         mintIsActive = !mintIsActive;
 
         emit FlipMintableState(mintIsActive);
