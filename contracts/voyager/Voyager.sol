@@ -28,6 +28,7 @@ contract Voyager is AccessControl, Pausable {
         bytes memory signature
     ) external sigVerified(signature) activeMint whenNotPaused nonReentrant
     {
+        require(vS.getWhitelistLevel(msg.sender)>0, "Level not Set");
         require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
                 vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
                 "Set mintTokenURI first");
@@ -44,8 +45,11 @@ contract Voyager is AccessControl, Pausable {
         } else {
             vS.setMintTokenIDWithoutURI(msg.sender, tokenID);
         }
+
+        vS.setLevel(tokenID, vS.getWhitelistLevel(msg.sender));
         
         vS.setTotalMinted(vS.getTotalMinted().add(1));
+        vS.setWhitelistLevel(msg.sender, 0); 
         vS.setExpiredWhitelist(msg.sender, true);
         vS.setWhitelistExpired(vS.getWhitelistExpired().add(1));
     }
@@ -152,6 +156,14 @@ contract Voyager is AccessControl, Pausable {
     ) external onlyAdmin whenNotPaused
     {
         vS.token0URI(_tokenURI);
+    }
+
+    function setWhitelistLevel(
+        address addr, 
+        uint level
+    ) external onlyAdmin 
+    {
+        vS.setWhitelistLevel(addr, level);
     }
 
     function setFee1TokenAddress(

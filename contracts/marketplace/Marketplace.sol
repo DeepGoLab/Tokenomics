@@ -54,7 +54,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
   );
 
   modifier validateItemId(uint256 itemId) {
-    require( itemId > 0 && itemId < _itemIds.current(), "itemId must less than_itemIds.current()");
+    require( itemId > 0 && itemId <= _itemIds.current(), "itemId must less than_itemIds.current()");
     _;
   }
 

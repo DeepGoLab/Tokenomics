@@ -13,7 +13,7 @@ contract DeepSeaPlankton is ERC20Burnable, HasMinters, ReentrancyGuard {
     event AddMintable(address to, uint value);
 
     constructor() ERC20("Deep Sea Plankton", "DSP") {
-        address[] memory _minters = new address[](2);
+        address[] memory _minters = new address[](1);
         _minters[0] = owner();
         addMinters(_minters);
     }

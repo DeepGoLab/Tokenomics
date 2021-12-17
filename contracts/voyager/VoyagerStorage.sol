@@ -26,19 +26,21 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     event SetTokenURI(uint tokenId, string tokenURI); 
     event SetFee1TokenAddress(address token1);
     event SetFee2TokenAddress(address token2);
+    event SetWhitelistLevel(address addr, uint level);
 
     Voyager[] public voyagers;
 
     mapping(address => uint[]) public ownedVoyagers;
     mapping(address => mapping( uint256 => uint256 )) public ownedVoyagersIndex;
     mapping(uint256 => uint256) public allVoyagersIndex;
-    mapping (address => uint256) public maxLevelOfOwner;
-    mapping (address => mapping(uint256 => uint256)) public tokenLevelCount;
+    mapping(address => uint256) public maxLevelOfOwner;
+    mapping(address => mapping(uint256 => uint256)) public tokenLevelCount;
     mapping(uint256 => string) private _tokenURIs;
     mapping(uint256 => mapping(uint256 => bool)) public setByOwner;
     mapping(address => uint256) private _tokenIDWithoutURI;
     mapping(address => uint256) private _mintTokenIDWithoutURI;
-    mapping (address => bool) private _expiredWhitelist; 
+    mapping(address => bool) private _expiredWhitelist;
+    mapping(address => uint) public whitelistLevelOf;
 
     uint256 private _maxWhitelisted = 1000;
     uint256 private _totalMinted;
@@ -248,6 +250,16 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         tokenLevelCount[_addr][_level] = _amount;
 
         emit SetTokenLevelCount(_addr, _level, _amount);
+    }
+
+    function getWhitelistLevel(address addr) external view returns(uint) {
+        return whitelistLevelOf[addr];
+    }
+
+    function setWhitelistLevel(address addr, uint level) external onlyProxy {
+        whitelistLevelOf[addr] = level;
+
+        emit SetWhitelistLevel(addr, level);
     }
 
     function mintVoyager(

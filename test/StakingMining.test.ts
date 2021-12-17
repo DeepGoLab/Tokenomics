@@ -110,11 +110,16 @@
 //       console.log('token0URI set successfully')
 //       this.signature = await sign(this.gp1.address, String(signer))
 //       console.log('gp1 signature is: '+this.signature)
+
+//       this.tx = await this.voyager.setWhitelistLevel(this.gp1.address, 1)
+//       await this.tx.wait();
 //       this.tx = await this.voyager.connect(this.gp1).mintVoyagerByWhitelist(this.signature)
 //       await this.tx.wait();
 //       console.log('token 0 nft minted')
 
 //       this.signature = await sign(this.ip1.address, String(signer))
+//       this.tx = await this.voyager.setWhitelistLevel(this.ip1.address, 1)
+//       await this.tx.wait();
 //       this.tx = await this.voyager.connect(this.ip1).mintVoyagerByWhitelist(this.signature)
 //       await this.tx.wait();
 
@@ -122,6 +127,8 @@
 //       console.log('ip1 first nft minted')
 
 //       this.signature = await sign(this.ip2.address, String(signer))
+//       this.tx = await this.voyager.setWhitelistLevel(this.ip2.address, 1)
+//       await this.tx.wait();
 //       this.tx = await this.voyager.connect(this.ip2).mintVoyagerByWhitelist(this.signature)
 //       await this.tx.wait();
 //       this.tx = await this.voyager.setTokenURI(this.ip2.address, 2, 1, "token2URI")

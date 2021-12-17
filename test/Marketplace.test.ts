@@ -45,6 +45,7 @@
 //     // add quoteToken 
 //     this.tx = await this.marketplace.addQuoteTokens([this.dgt])
 //     await this.tx.wait()
+//     console.log("quote token added")
 
 //     // mint NFT
 //     this.tx = await this.nft.connect(this.ip1).mint() 
@@ -68,6 +69,7 @@
 //         getBigNumber(10)
 //     )
 //     await this.tx.wait()
+//     console.log("Market Item Created")
 
 //     expect(await this.nft.balanceOf(this.ip1.address))
 //       .to.be.equal(0)
