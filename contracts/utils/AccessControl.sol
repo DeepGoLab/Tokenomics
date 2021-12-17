@@ -11,7 +11,9 @@ contract AccessControl is Ownable, ReentrancyGuard {
     using SafeMath for uint;
 
     // event ContractUpgrade(address newContract);
+    event SetProxy(address proxy);
     event AdminTransferred(address oldAdmin, address newAdmin);
+    event FlipMintableState(bool mintIsActive);
 
     address private _admin;
     address public proxy;
@@ -50,6 +52,8 @@ contract AccessControl is Ownable, ReentrancyGuard {
     function setProxy(address _proxy) external onlyOwner {
         require(_proxy != address(0), "Invalid Address");
         proxy = _proxy;
+
+        emit SetProxy(_proxy);
     }
 
     modifier onlyProxy() {
@@ -91,5 +95,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
     */
     function flipMintableState() public onlyOwner {
         mintIsActive = !mintIsActive;
+
+        emit FlipMintableState(mintIsActive);
     }
 }

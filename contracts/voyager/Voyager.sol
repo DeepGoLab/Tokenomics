@@ -156,14 +156,14 @@ contract Voyager is AccessControl, Pausable {
 
     function setFee1TokenAddress(
         address _token1
-    ) public onlyAdmin whenNotPaused notZeroAddress(_token1) nonReentrant
+    ) public onlyOwner whenNotPaused notZeroAddress(_token1) nonReentrant
     {
         vS.setFee1TokenAddress(_token1);
     }
 
     function setFee2TokenAddress(
         address _token2
-    ) public onlyAdmin whenNotPaused notZeroAddress(_token2) nonReentrant
+    ) public onlyOwner whenNotPaused notZeroAddress(_token2) nonReentrant
     {
         vS.setFee2TokenAddress(_token2);
         dsp = DeepSeaPlankton(_token2);

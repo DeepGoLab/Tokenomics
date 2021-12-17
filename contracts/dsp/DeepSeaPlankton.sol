@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./HasMinters.sol";
 
 contract DeepSeaPlankton is ERC20Burnable, HasMinters, ReentrancyGuard {
+    
+    event AddMintable(address to, uint value);
 
     constructor() ERC20("Deep Sea Plankton", "DSP") {
         address[] memory _minters = new address[](2);
@@ -24,6 +26,8 @@ contract DeepSeaPlankton is ERC20Burnable, HasMinters, ReentrancyGuard {
 
     function addMintable(address _to, uint _value) public onlyMinter nonReentrant {
         mintable[_to] += _value;
+
+        emit AddMintable(_to, _value);
     }
 
     function mintByUser() public nonReentrant {
