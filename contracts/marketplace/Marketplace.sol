@@ -53,6 +53,11 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     uint256 indexed itemId
   );
 
+  modifier validateItemId(uint256 itemId) {
+    require( itemId > 0 && itemId < _itemIds.current(), "itemId must less than_itemIds.current()");
+    _;
+  }
+
   function createMarketItemByBNB(
     address nftContract,
     uint256 tokenId,
@@ -126,18 +131,19 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     );
   }
 
-  function getQuoteTokenAddress(uint256 itemId) public view returns (address) {
+  function getQuoteTokenAddress(uint256 itemId) public view validateItemId(itemId) returns (address) {
       return idToMarketItem[itemId].quoteTokenContract;
   }
 
-  function getPrice(uint256 itemId) public view returns (uint) {
+  function getPrice(uint256 itemId) public view validateItemId(itemId) returns (uint) {
       return idToMarketItem[itemId].price;
   }
 
   /* Creates the sale of a marketplace item */
   function createMarketSale(
     uint256 itemId
-  ) external payable nonReentrant {
+  ) external payable nonReentrant validateItemId(itemId) {
+    require(msg.sender != idToMarketItem[itemId].seller, "Seller can not be the buyer");
     uint price = idToMarketItem[itemId].price;
     uint tokenId = idToMarketItem[itemId].tokenId;
     address quoteTokenContract = idToMarketItem[itemId].quoteTokenContract;
@@ -165,7 +171,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
   /* Cancels the sale of a marketplace item */
   function cancelMarketSale(
     uint256 itemId
-  ) public nonReentrant {
+  ) public nonReentrant validateItemId(itemId) {
     require(idToMarketItem[itemId].seller == msg.sender &&
             idToMarketItem[itemId].owner == address(0), "Invalid seller");
     uint tokenId = idToMarketItem[itemId].tokenId;
@@ -329,7 +335,7 @@ contract Marketplace is ReentrancyGuard, HasQuoteTokens{
     return items;
   }
 
-  function getMarketItem(uint itemId) public view returns (MarketItem memory){
+  function getMarketItem(uint itemId) public view validateItemId(itemId) returns (MarketItem memory){
     return idToMarketItem[itemId];
   } 
 
