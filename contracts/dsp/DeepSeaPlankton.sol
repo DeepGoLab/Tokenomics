@@ -20,7 +20,7 @@ contract DeepSeaPlankton is ERC20Burnable, HasMinters, ReentrancyGuard {
 
     mapping (address => uint) public mintable;
 
-    function mintByMinter(address _to, uint256 _value) external onlyMinter nonReentrant {
+    function mintByMinter(address _to, uint256 _value) external onlyMinter activeMint nonReentrant {
         _mint(_to, _value);
     }
 
@@ -30,7 +30,7 @@ contract DeepSeaPlankton is ERC20Burnable, HasMinters, ReentrancyGuard {
         emit AddMintable(_to, _value);
     }
 
-    function mintByUser() external nonReentrant {
+    function mintByUser() external activeMint nonReentrant {
         require(mintable[msg.sender] > 0, "No mintable");
         _mint(msg.sender, mintable[msg.sender]);
         mintable[msg.sender] = 0;

@@ -7,14 +7,31 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract HasMinters is Ownable {
   event MinterAdded(address indexed _minter);
   event MinterRemoved(address indexed _minter);
+  event FlipMintableState(bool mintIsActive);
 
   address[] public minters;
   mapping (address => bool) public minter;
+
+  bool public mintIsActive = true;
 
   modifier onlyMinter {
     require(minter[msg.sender]);
     _;
   }
+
+  modifier activeMint() {
+    require(mintIsActive, "Unactive to mint");
+    _;
+  } 
+
+    /*
+    * Pause sale if active, make active if paused
+    */
+    function flipMintableState() external onlyOwner {
+        mintIsActive = !mintIsActive;
+
+        emit FlipMintableState(mintIsActive);
+    }
 
   function addMinters(address[] memory _addedMinters) public onlyOwner {
     address _minter;

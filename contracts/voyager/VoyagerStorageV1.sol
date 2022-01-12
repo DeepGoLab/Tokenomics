@@ -8,7 +8,7 @@ import "../utils/AccessControl.sol";
 import "./BaseStorage.sol";
 import "../utils/Sig.sol";
 
-contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl {
+contract VoyagerStorageV1 is ERC721, IERC721Enumerable, BaseStorage, AccessControl {
     using SafeMath for uint;
 
     event SetSetByOwner(uint tokenId, uint level, bool isSet);
@@ -317,7 +317,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 index
     ) public view virtual override returns (uint256) 
     {
-        require(index < VoyagerStorage.totalSupply(), "ERC721Enumerable: global index out of bounds");
+        require(index < totalSupply(), "ERC721Enumerable: global index out of bounds");
         return voyagers[index].id;
     }
 

@@ -7,13 +7,13 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "../utils/AccessControl.sol";
 import "../dsp/DeepSeaPlankton.sol";
-import "./VoyagerStorage.sol";
+import "./VoyagerStorageV1.sol";
 
 contract Voyager is AccessControl, Pausable {
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    VoyagerStorage public vS;
+    VoyagerStorageV1 public vS;
     DeepSeaPlankton public dsp;
 
     constructor(
@@ -21,7 +21,7 @@ contract Voyager is AccessControl, Pausable {
     )
     {
         require(_voyagerStorage != address(0) , "Invalid Address");
-        vS = VoyagerStorage(_voyagerStorage);
+        vS = VoyagerStorageV1(_voyagerStorage);
     }
     
     function mintVoyagerByWhitelist(

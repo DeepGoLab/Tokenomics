@@ -66,23 +66,6 @@ export async function sign(addr: string, privateKey: string) {
     var hashMessage = web3.utils.soliditySha3(addr)
     var sig = await web3.eth.accounts.sign( hashMessage, privateKey )
     return sig.signature
-  
-
-//   var sig2 = await web3.eth.accounts.sign( "0x16e0ff39086bb50b49c5654fc1041e7d185bf0786434d27019c3b147bb8b1c11", process.env.POLYGON_OWNER_PRIVATE_KEY )
-//   console.log('eth.account: '+sig2.signature)
-
-//   const results = await dgVerify
-//   .methods
-//   .totalSupply()
-//   .call();
-
-//   console.log(results)
-// }{
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       resolve('');
-//     }, ms)
-//   });
 }
 
 const testFunc = async () => {
@@ -92,11 +75,11 @@ const testFunc = async () => {
 
 // testFunc()
 
-module.exports = {
-  BASE_TEN: BASE_TEN,
-  ADDRESS_ZERO: ADDRESS_ZERO,
-  getBigNumber: getBigNumber,
-  numToBigNumber: numToBigNumber,
-  sign: sign,
-  getDGTAddress: getDGTAddress
-}
+// module.exports = {
+//   BASE_TEN: BASE_TEN,
+//   ADDRESS_ZERO: ADDRESS_ZERO,
+//   getBigNumber: getBigNumber,
+//   numToBigNumber: numToBigNumber,
+//   sign: sign,
+//   getDGTAddress: getDGTAddress
+// }
