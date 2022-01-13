@@ -31,7 +31,7 @@ contract TreasuryStorage is AccessControl{
     }
     // pilot Id -> voyager address -> Account
     mapping(uint256 => mapping(address => Account)) public accountOfVoyagerOfPilot;
-    mapping(address => bool) public isDGTClaimed;
+    mapping(uint256 => mapping(address => bool)) public isDGTClaimed;
 
     constructor(
         address pilotStorage_,
@@ -46,7 +46,7 @@ contract TreasuryStorage is AccessControl{
         address addr_
     ) public view returns(uint256) {
         Account memory account = accountOfVoyagerOfPilot[pilotTokenId_][addr_];
-        return account.balance - account.unlocked;
+        return account.balance.sub(account.unlocked);
     }
 
     function checkRepayDGT(
@@ -87,8 +87,13 @@ contract TreasuryStorage is AccessControl{
     ) external onlyProxy {
         uint256 claimAmount = getRepayDSP(pilotTokenId_, addr_);
         address leader = pS.getLeader(pilotTokenId_);
+        address nftOwner = pS.ownerOf(pilotTokenId_);
+        uint256 chargeShare = pS.getChargeShare(pilotTokenId_);
         // 回款
-        IERC20(pS.dspAddress()).safeTransferFrom(address(this), leader, claimAmount); 
+        IERC20(pS.dspAddress()).safeTransferFrom(address(this), nftOwner, 
+                                                 claimAmount * chargeShare / 10000);
+        IERC20(pS.dspAddress()).safeTransferFrom(address(this), leader, 
+                                   claimAmount - claimAmount * chargeShare / 10000); 
         // 销毁账户
         accountOfVoyagerOfPilot[pilotTokenId_][addr_].claimed += claimAmount;
     }
@@ -98,21 +103,23 @@ contract TreasuryStorage is AccessControl{
         address addr_
     ) external onlyProxy {
         bool isRepayDGT = checkRepayDGT(pilotTokenId_, msg.sender);
-        if(!isRepayDGT || isDGTClaimed[addr_]) {
+        if(!isRepayDGT || isDGTClaimed[pilotTokenId_][addr_]) {
             return;
         }
         uint256 mintDGTFee = vS.baseMintFee();
         uint256 toLeader = mintDGTFee / 10;
+        address nftOwner = pS.ownerOf(pilotTokenId_);
+        uint256 chargeShare = pS.getChargeShare(pilotTokenId_);
 
         require(IERC20(pS.dgtAddress()).balanceOf(address(this)) >= toLeader, 
                         "Unsufficient dgt token");
+        IERC20(pS.dgtAddress()).safeTransferFrom(address(this), nftOwner, 
+                                                 toLeader * chargeShare / 10000);
         IERC20(pS.dgtAddress()).safeTransferFrom(address(this),
-                                                    pS.getLeader(pilotTokenId_),
-                                                    toLeader);
-        isDGTClaimed[addr_] = true;
+                                                 pS.getLeader(pilotTokenId_),
+                                      toLeader - toLeader * chargeShare / 10000);
+        isDGTClaimed[pilotTokenId_][addr_] = true;
     }
-
-
 
     function updateAccount(
         uint256 pilotTokenId_, 
@@ -147,14 +154,14 @@ contract TreasuryStorage is AccessControl{
             accountOfVoyagerOfPilot[pilotTokenId_][addr_].nextPayTime = nextPayTime;
         }
 
-        if (account.claimed < unlocked) {
-            require(IERC20(pS.dspAddress()).balanceOf(address(this)) >= unlocked - account.claimed, 
-                                            "Unsufficient dsp token");
-            // 转账给会长
-            address leader = pS.getPilotByTokenId(pilotTokenId_).leader;
-            IERC20(pS.dspAddress()).safeTransferFrom(address(this), leader, unlocked - account.claimed);
-            accountOfVoyagerOfPilot[pilotTokenId_][addr_].claimed = unlocked;
-        }
+        // if (account.claimed < unlocked) {
+        //     require(IERC20(pS.dspAddress()).balanceOf(address(this)) >= unlocked - account.claimed, 
+        //                                     "Unsufficient dsp token");
+        //     // 转账给会长
+        //     address leader = pS.getPilotByTokenId(pilotTokenId_).leader;
+        //     IERC20(pS.dspAddress()).safeTransferFrom(address(this), leader, unlocked - account.claimed);
+        //     accountOfVoyagerOfPilot[pilotTokenId_][addr_].claimed = unlocked;
+        // }
     }
 
     function setAccountBalance(
@@ -195,5 +202,25 @@ contract TreasuryStorage is AccessControl{
         uint256 expiredTime_       
     ) external onlyProxy {
         accountOfVoyagerOfPilot[pilotTokenId_][addr_].expiredTime = expiredTime_;
-    }       
+    }    
+
+    function setAccountClaimed(
+        uint256 pilotTokenId_, 
+        address addr_, 
+        uint256 claimed_       
+    ) external onlyProxy {
+        accountOfVoyagerOfPilot[pilotTokenId_][addr_].claimed = claimed_;
+    }    
+
+    function setAccountUnlocked(
+        uint256 pilotTokenId_, 
+        address addr_, 
+        uint256 unlocked_       
+    ) external onlyProxy {
+        accountOfVoyagerOfPilot[pilotTokenId_][addr_].unlocked = unlocked_;
+    }    
+
+    function getAcount(uint256 pilotTokenId_, address addr_) public view returns(Account memory) {
+        return accountOfVoyagerOfPilot[pilotTokenId_][addr_];
+    }
 }

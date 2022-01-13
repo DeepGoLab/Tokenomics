@@ -29,6 +29,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     uint256 public _totalMinted;
     uint256 public baseMintFee = 10 * tokenDecimal; // dgt费用
     uint256 public levelUpFee = 10 * tokenDecimal;
+    string public _token0URI;
     
     Voyager[] public voyagers;
     mapping(address => uint[]) public ownedVoyagers;
@@ -47,6 +48,26 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
 
     constructor() ERC721("Voyager", "VOG") {}
 
+    function token0URI(
+        string memory _string
+    ) public onlyProxy 
+    {
+        _token0URI = _string;
+    }
+
+    function setVoyagerOfAddressOfPilot(
+        uint256 pilotTokenId_,
+        address addr_,
+        uint256 voyagerId_
+        ) external onlyProxy {
+        voyagerOfAddressOfPilot[pilotTokenId_][addr_] = voyagerId_;
+    }
+    
+    function _setTokenURI(uint256 _tokenId, string memory _tokenURI) public virtual {
+        require(_exists(_tokenId), "ERC721Metadata: URI set of nonexistent token");
+        _tokenURIs[_tokenId] = _tokenURI;  
+    }
+
     function setBaseMintFee(uint256 baseMintFee_) external onlyOwner {
         baseMintFee = baseMintFee_;
     }
@@ -58,9 +79,16 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     function mintVoyager(
         address _addr, 
         uint256 _tokenId
-    ) external
+    ) external onlyProxy
     {
         _safeMint(_addr, _tokenId);
+    }
+
+    function setTotalMinted(
+        uint256 _amount
+    ) public onlyProxy 
+    {
+        _totalMinted = _amount;
     }
 
     function getTokenIDWithoutURI(
@@ -253,5 +281,16 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     {
         require(index < totalSupply(), "ERC721Enumerable: global index out of bounds");
         return voyagers[index].id;
+    }
+
+    function transferVoyager(
+        address _to, 
+        uint256 _tokenId
+    ) external 
+    {
+        require(getTokenIDWithoutURI(msg.sender) == 0  &&
+                getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set tokenURI first");
+        _safeTransfer(msg.sender, _to, _tokenId, "");
     }
 }

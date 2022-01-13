@@ -7,11 +7,6 @@ import "../utils/AccessControl.sol";
 import "../utils/Sig.sol";
 import "./VoyagerStorage.sol";
 
-/*
- * 1. 铸造者即会长(1-x)%收益，NFT持有者x%收益，x由会长设定，会长可变更
- * 2. 限定数量，前100个空投，白名单铸造无限制，第i个公会花费 50*(i+1) DGT
- * 3. NFT metadata中包含"工会名称"
- */
 contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     using SafeMath for uint256;
 
@@ -53,6 +48,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     uint256 public _totalMinted;
     uint256 public _whitelistExpired;
     uint256 public baseMintFee = 100 * tokenDecimal;
+    string public _token0URI;
     
     // levelUp fee
     mapping(uint256 => Fee) public levelUpFee;
@@ -70,6 +66,17 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     mapping(uint256 => uint256) public levelUpExp;
 
     constructor() ERC721("PilotWhale", "PLW") {}
+
+    function token0URI(
+        string memory _string
+    ) public onlyProxy 
+    {
+        _token0URI = _string;
+    }
+
+    function setLevelUpExp(uint256 level_, uint256 exp_) external onlyOwner {
+        levelUpExp[level_] = exp_;
+    }
 
     function setIsBanned(uint256 tokenId_, address addr_) external onlyProxy {
         isBannedOfPilot[tokenId_][addr_] = true;
@@ -243,6 +250,10 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
 
     function getC(uint256 tokenId_) external view returns (uint256) {
         return pilots[allPilotsIndex[tokenId_]].c;
+    }
+
+    function getChargeShare(uint256 tokenId_) external view returns (uint256) {
+        return pilots[allPilotsIndex[tokenId_]].chargeShare;
     }
 
     function getWhitelistExpired() public view returns (uint256){

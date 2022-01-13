@@ -45,11 +45,20 @@ contract PilotWhale is AccessControl, Pausable {
 
     function withdraw(
         uint256 amount_, 
-        address addr_
+        address addr_,
+        address tokenAddress_
     ) external onlyOwner notZeroAddress(addr_) {
-        require(IERC20(pS.dgtAddress()).balanceOf(address(this)) >= amount_, 
-                                                  "Unsufficient dgt token");
-        IERC20(pS.dspAddress()).safeTransferFrom(address(this), addr_, amount_);
+        require(IERC20(tokenAddress_).balanceOf(address(this)) >= amount_, 
+                                                  "Unsufficient token");
+        IERC20(tokenAddress_).safeTransferFrom(address(this), addr_, amount_);
+    }
+
+    function setToken0URI(string memory uri_, bool isPilot) external {
+        if (isPilot) {
+            pS.token0URI(uri_);
+        } else {
+            vS.token0URI(uri_);
+        }
     }
 
     function mintPilotByWhitelist(
@@ -72,8 +81,13 @@ contract PilotWhale is AccessControl, Pausable {
         uint256 tokenID = pS.getTotalMinted();
         
         pS.mintPilot(msg.sender, tokenID);
+
+        if (tokenID == 0) {
+            pS._setTokenURI(tokenID, pS._token0URI());
+        } else {
+            pS.setMintTokenIDWithoutURI(msg.sender, tokenID);
+        }
         
-        pS.setMintTokenIDWithoutURI(msg.sender, tokenID);
         pS.setName(tokenID, name_); // 设置工会名称
         pS.setChargeShare(tokenID, chargeShare_); // 设置NFT持有者收费比率
         pS.setA(tokenID, a_);
@@ -82,6 +96,44 @@ contract PilotWhale is AccessControl, Pausable {
         pS.setTotalMinted(pS.getTotalMinted().add(1));
         pS.setExpiredWhitelist(msg.sender, true);
         pS.setWhitelistExpired(pS.getWhitelistExpired().add(1));
+    }
+
+    function ExtenseVoyager(
+        uint256 pilotTokenId_,
+        uint256 quarter_
+    ) external activeMint whenNotPaused nonReentrant notBanned(pilotTokenId_, msg.sender)
+    {
+        require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
+                vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set mintTokenURI first");    
+        // 该地址未持有
+        uint256 tokenID = vS.voyagerOfAddressOfPilot(pilotTokenId_, msg.sender);
+        require( tokenID > 0, "Not Minted");
+
+        // dsp费用
+        uint256 monthDSPFee = (pS.getA(pilotTokenId_) * 
+                          (vS.voyagerCountOfPilot(pilotTokenId_) + 1) ** 2 + 
+                          pS.getC(pilotTokenId_)) * pS.tokenDecimal();
+        
+        require(IERC20(pS.dspAddress()).balanceOf(msg.sender) >= monthDSPFee, 
+                                            "Unsufficient dsp token");
+        // // 转账到当前合约
+        IERC20(pS.dspAddress()).safeTransferFrom(msg.sender, address(tS), monthDSPFee);
+
+        uint256 expiredTime = tS.getAcount(pilotTokenId_, msg.sender).expiredTime;
+
+        if (expiredTime >= block.timestamp) {
+            uint256 balance = tS.getAcount(pilotTokenId_, msg.sender).balance;
+            expiredTime += uint256(3 * quarter_ * 30 days);
+            tS.setAccountExpiredTime(pilotTokenId_, msg.sender, expiredTime);
+            tS.setAccountBalance(pilotTokenId_, msg.sender, balance);
+        } else {
+            tS.setAccountBalance(pilotTokenId_, msg.sender, monthDSPFee);
+            tS.setAccountNextPayTime(pilotTokenId_, msg.sender, block.timestamp + 30 days);
+            tS.setAccountExpiredTime(pilotTokenId_, msg.sender, block.timestamp + quarter_ * 3 * 30 days);
+            tS.setAccountClaimed(pilotTokenId_, msg.sender, 0);
+            tS.setAccountUnlocked(pilotTokenId_, msg.sender, 0);
+        }
     }
 
     function mintVoyager(
@@ -99,37 +151,46 @@ contract PilotWhale is AccessControl, Pausable {
         // dgt费用
         uint256 mintDGTFee = vS.baseMintFee();
         // dsp费用
-        uint256 monthDSPFee = pS.getA(pilotTokenId_) * 
+        uint256 monthDSPFee = (pS.getA(pilotTokenId_) * 
                           (vS.voyagerCountOfPilot(pilotTokenId_) + 1) ** 2 + 
-                          pS.getC(pilotTokenId_);
+                          pS.getC(pilotTokenId_)) * pS.tokenDecimal();
+        
+        vS.mintVoyager(msg.sender, tokenID);
+
+        if (tokenID == 0) {
+            vS._setTokenURI(tokenID, vS._token0URI());
+        } else {
+            vS.setMintTokenIDWithoutURI(msg.sender, tokenID);
+        }
         // 账户余额判断
         require(IERC20(pS.dgtAddress()).balanceOf(msg.sender) >= mintDGTFee, 
                                             "Unsufficient dgt token");
         require(IERC20(pS.dspAddress()).balanceOf(msg.sender) >= monthDSPFee, 
                                             "Unsufficient dsp token");
         // 转账到当前合约
-        uint256 toLeader = mintDGTFee / 10;
-        IERC20(pS.dgtAddress()).safeTransferFrom(msg.sender, address(this), mintDGTFee - toLeader);
-        IERC20(pS.dgtAddress()).safeTransferFrom(msg.sender, address(tS), toLeader);
+        // uint256 toLeader = mintDGTFee / 10;
+        IERC20(pS.dgtAddress()).safeTransferFrom(msg.sender, address(this), mintDGTFee - mintDGTFee / 10);
+        IERC20(pS.dgtAddress()).safeTransferFrom(msg.sender, address(tS), mintDGTFee / 10);
         IERC20(pS.dspAddress()).safeTransferFrom(msg.sender, address(tS), monthDSPFee);
 
-        // nextPayTime初始化，startTime后三天 1次，lastPayTime
-        // 下一次lock money取决于nextPayTime: 依赖后端轮询
-        // 1. 时间未到nextPayTime,不支付
-        // 2. 时间已过nextPayTime 且 未到（nextPayRound + 1）,锁定nextPayTime金额
-        // 3. 时间超过（nextPayRound + 1）,解锁nextPayRound及之前所有金额给公会长
+        // // // nextPayTime初始化，startTime后三天 1次，lastPayTime
+        // // // 下一次lock money取决于nextPayTime: 依赖后端轮询
+        // // // 1. 时间未到nextPayTime,不支付
+        // // // 2. 时间已过nextPayTime 且 未到（nextPayRound + 1）,锁定nextPayTime金额
+        // // // 3. 时间超过（nextPayRound + 1）,解锁nextPayRound及之前所有金额给公会长
         uint256 nextPayTime = block.timestamp + uint256(3 days);
         // expiredTime初始化
         uint256 expiredTime = block.timestamp + uint256(3 * quarter_ * 30 days);
-
-        vS.mintVoyager(msg.sender, tokenID);
-        vS.setMintTokenIDWithoutURI(msg.sender, tokenID);
+        
         vS.setPilotId(tokenID, pilotTokenId_);
+        vS.setTotalMinted(vS.getTotalMinted().add(1));
         
         tS.setAccountBalance(pilotTokenId_, msg.sender, monthDSPFee);
         tS.setAccountStartTime(pilotTokenId_, msg.sender, block.timestamp);
         tS.setAccountNextPayTime(pilotTokenId_, msg.sender, nextPayTime);
         tS.setAccountExpiredTime(pilotTokenId_, msg.sender, expiredTime);
+        vS.setVoyagerOfAddressOfPilot(pilotTokenId_, msg.sender, tokenID);
+        vS.setVoyagerCountOfPilot(pilotTokenId_, vS.voyagerCountOfPilot(pilotTokenId_).add(1));
     }
 
     function reedemVoyager(uint256 pilotTokenId_) external activeMint whenNotPaused nonReentrant {
@@ -200,63 +261,107 @@ contract PilotWhale is AccessControl, Pausable {
         pS.setIsBanned(pilotTokenId_, addr_);
     }
 
-    function mintPilot(        
-        string memory name_,
-        uint256 chargeShare_,
-        uint256 a_,
-        uint256 c_
-    ) external activeMint whenNotPaused nonReentrant
+    // function mintPilot(        
+    //     string memory name_,
+    //     uint256 chargeShare_,
+    //     uint256 a_,
+    //     uint256 c_
+    // ) external activeMint whenNotPaused nonReentrant
+    // {
+    //     require(pS.getTokenIDWithoutURI(msg.sender) == 0 && 
+    //             pS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+    //             "Set MintTokenURI First");
+    //     require(pS.getTotalMinted() >= pS.getMaxWhitelisted(), 
+    //             "Whitelist Mint First");
+
+    //     uint256 tokenID = pS.getTotalMinted();
+    //     uint256 mintFee = pS.getMintFee(msg.sender);
+    //     require(IERC20(pS.dgtAddress()).balanceOf(msg.sender) >= mintFee, 
+    //                                         "Unsufficient dgt token");
+    //     // Pilot铸造费直接作为收入
+    //     IERC20(pS.dgtAddress()).safeTransferFrom(msg.sender, address(this), mintFee);
+    //     pS.mintPilot(msg.sender, tokenID);
+
+    //     if (tokenID == 0) {
+    //         pS._setTokenURI(tokenID, pS._token0URI());
+    //     } else {
+    //         pS.setMintTokenIDWithoutURI(msg.sender, tokenID);
+    //     }
+        
+    //     pS.setName(tokenID, name_);
+    //     pS.setChargeShare(tokenID, chargeShare_);
+    //     pS.setA(tokenID, a_);
+    //     pS.setC(tokenID, c_);
+
+    //     pS.setTotalMinted(pS.getTotalMinted().add(1));
+    // }
+
+    function setTokenURI(
+        address _user, 
+        uint256 _tokenid, 
+        string memory _tokenURI,
+        bool isPilot
+    ) external onlyAdmin whenNotPaused
     {
-        require(pS.getTokenIDWithoutURI(msg.sender) == 0 && 
-                pS.getMintTokenIDWithoutURI(msg.sender) == 0, 
-                "Set MintTokenURI First");
-        require(pS.getTotalMinted() >= pS.getMaxWhitelisted(), 
-                "Whitelist Mint First");
+        if (isPilot) {
+            uint256 tokenID = pS.getTokenIDWithoutURI(_user);
+            if (tokenID == 0) {
+                tokenID = pS.getMintTokenIDWithoutURI(_user);
+            }
+            
+            require(tokenID > 0, "Unvalid token");
+            require(pS.ownerOf(tokenID) == _user, "Not owner");
+            require(_tokenid == tokenID, "Consistent tokenID");
 
-        uint256 tokenID = pS.getTotalMinted();
-        uint256 mintFee = pS.getMintFee(msg.sender);
-        require(IERC20(pS.dgtAddress()).balanceOf(msg.sender) >= mintFee, 
-                                            "Unsufficient dgt token");
-        // Pilot铸造费直接作为收入
-        IERC20(pS.dgtAddress()).safeTransferFrom(msg.sender, address(this), mintFee);
-        pS.mintPilot(msg.sender, tokenID);
-        
-        pS.setMintTokenIDWithoutURI(msg.sender, tokenID);
-        pS.setName(tokenID, name_);
-        pS.setChargeShare(tokenID, chargeShare_);
-        pS.setA(tokenID, a_);
-        pS.setC(tokenID, c_);
+            pS._setTokenURI(tokenID, _tokenURI);
 
-        pS.setTotalMinted(pS.getTotalMinted().add(1));
-    }
+            pS.setTokenIDWithoutURI(_user, 0);
+            pS.setMintTokenIDWithoutURI(_user, 0);
+        } else {
+            uint256 tokenID = vS.getTokenIDWithoutURI(_user);
+            if (tokenID == 0) {
+                tokenID = vS.getMintTokenIDWithoutURI(_user);
+            }
+            
+            require(tokenID > 0, "Unvalid token");
+            require(vS.ownerOf(tokenID) == _user, "Not owner");
+            require(_tokenid == tokenID, "Consistent tokenID");
 
-    function levelUp(
-        uint256 tokenID
-    ) external whenNotPaused nonReentrant {
-        require(tokenID != 0, "TokenID Should Not Be 0");
-        require(pS.getTokenIDWithoutURI(msg.sender) == 0 && 
-                pS.getMintTokenIDWithoutURI(msg.sender) == 0, 
-                "Set tokenURI first");
+            vS._setTokenURI(tokenID, _tokenURI);
 
-        PilotStorage.Fee memory fee = pS.getLevelUpFee(tokenID);
-        
-        if (fee.token1 != address(0)) {
-            require(IERC20(fee.token1).balanceOf(msg.sender) >= fee.amount1, 
-                                            "Unsufficient token1");
-            IERC20(fee.token1).safeTransferFrom(msg.sender, address(this), fee.amount1);
-        }
-        
-        if (fee.token2 != address(0)) {
-            require(IERC20(fee.token2).balanceOf(msg.sender) >= fee.amount2, 
-                                            "Unsufficient token2");
-            IERC20(fee.token2).safeTransferFrom(msg.sender, address(this), fee.amount2);
+            vS.setTokenIDWithoutURI(_user, 0);
+            vS.setMintTokenIDWithoutURI(_user, 0);            
         }
 
-        pS.setLevel(tokenID, pS.getLevel(tokenID) + 1);
-        pS.setTokenIDWithoutURI(msg.sender, tokenID);
     }
 
-    function addExp(uint tokenId_, address member_, uint256 exp_) external notZeroAddress(member_) {
+    // function levelUp(
+    //     uint256 tokenID
+    // ) external whenNotPaused nonReentrant {
+    //     require(tokenID != 0, "TokenID Should Not Be 0");
+    //     require(pS.getTokenIDWithoutURI(msg.sender) == 0 && 
+    //             pS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+    //             "Set tokenURI first");
+
+    //     PilotStorage.Fee memory fee = pS.getLevelUpFee(tokenID);
+        
+    //     if (fee.token1 != address(0)) {
+    //         require(IERC20(fee.token1).balanceOf(msg.sender) >= fee.amount1, 
+    //                                         "Unsufficient token1");
+    //         IERC20(fee.token1).safeTransferFrom(msg.sender, address(this), fee.amount1);
+    //     }
+        
+    //     if (fee.token2 != address(0)) {
+    //         require(IERC20(fee.token2).balanceOf(msg.sender) >= fee.amount2, 
+    //                                         "Unsufficient token2");
+    //         IERC20(fee.token2).safeTransferFrom(msg.sender, address(this), fee.amount2);
+    //     }
+
+    //     pS.setLevel(tokenID, pS.getLevel(tokenID) + 1);
+    //     pS.setTokenIDWithoutURI(msg.sender, tokenID);
+    // }
+
+    function addExp(uint tokenId_, address member_, uint256 exp_) external notZeroAddress(member_) onlyAdmin {
         // tokenID合法
         require(tokenId_ < pS.maxSupply(), "Invalid Token Id");
         // 用户存在
@@ -269,21 +374,29 @@ contract PilotWhale is AccessControl, Pausable {
         address member_ = msg.sender;
         uint256 memberTokenId = vS.getVoyagerOfAddressOfPilot(tokenId_, member_);
         uint256 level = vS.getLevel(memberTokenId);
-        if (pS.exp(tokenId_, member_) >= pS.levelUpExp(level)) {
-            require(IERC20(pS.dgtAddress()).balanceOf(member_) >= vS.levelUpFee(), 
-                        "Unsufficient dgt token");
-            IERC20(pS.dgtAddress()).safeTransferFrom(member_, address(this), vS.levelUpFee());
-            level += 1;
-            pS.setLevel(memberTokenId, level);
-        }
+
+        require(memberTokenId != 0, "TokenID Should Not Be 0");
+        // require(vS.getTokenIDWithoutURI(msg.sender) == 0 && 
+        //         vS.getMintTokenIDWithoutURI(msg.sender) == 0, 
+        //         "Set tokenURI first");
+
+        // if (pS.exp(tokenId_, member_) >= pS.levelUpExp(level)) {
+        //     require(IERC20(pS.dgtAddress()).balanceOf(member_) >= vS.levelUpFee(), 
+        //                 "Unsufficient dgt token");
+        //     IERC20(pS.dgtAddress()).safeTransferFrom(member_, address(this), vS.levelUpFee());
+        //     level += 1;
+        //     pS.setLevel(memberTokenId, level);
+        // }
+
+        // vS.setTokenIDWithoutURI(msg.sender, memberTokenId);
     }
 
-    function setLevelUpFee(
-        uint256 tokenId_,
-        PilotStorage.Fee memory fee_
-    ) external onlyOwner {
-        pS.setLevelUpFee(tokenId_, fee_);
-    }
+    // function setLevelUpFee(
+    //     uint256 tokenId_,
+    //     PilotStorage.Fee memory fee_
+    // ) external onlyOwner {
+    //     pS.setLevelUpFee(tokenId_, fee_);
+    // }
 
     // 更换会长: 只能由当前会长完成操作
     function changeLeader(uint256 tokenId_, address leader_) external notZeroAddress(leader_) {

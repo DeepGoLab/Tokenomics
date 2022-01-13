@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../utils/AccessControl.sol";
-import "../voyager/VoyagerStorage.sol";
+import "../Guild/VoyagerStorage.sol";
 import "./Treasury.sol";
 import "hardhat/console.sol";
 
