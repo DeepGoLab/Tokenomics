@@ -142,7 +142,14 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     {
         return voyagers[_index];
     }
-    
+
+    function getVoyagerByTokenId(
+        uint256 tokenId_
+    ) public view returns (Voyager memory)
+    {
+        return voyagers[allVoyagersIndex[tokenId_]];
+    }
+
     function getLevel(uint256 tokenId_) external view returns (uint256) {
         return voyagers[allVoyagersIndex[tokenId_]].level;
     }
