@@ -8,20 +8,39 @@ import "../utils/AccessControl.sol";
 import "./BaseStorage.sol";
 import "../utils/Sig.sol";
 
-contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl {
+contract VoyagerStorageV1 is ERC721, IERC721Enumerable, BaseStorage, AccessControl {
     using SafeMath for uint;
+
+    event SetSetByOwner(uint tokenId, uint level, bool isSet);
+    event SetTokenIDWithoutURI(address addr, uint tokenId);
+    event SetTotalMinted(uint amount);
+    event SetWhitelistExpired(uint amount);
+    event Token0URI(string _string);
+    event SetExpiredWhitelist(address addr, bool isExpired);
+    event SetMaxLevelOfOwner(address addr, uint level);
+    event SetTokenLevelCount(address addr, uint level, uint amount);
+    event SetLevelUpFee(uint toLevel, uint dgt, uint dsp);
+    event SetCoolDown(uint toLevel, uint interval);
+    event SetLevelStartHoldingTime(uint tokenId, uint curTimeStamp);
+    event SetLevel(uint tokenId, uint level);
+    event SetTokenURI(uint tokenId, string tokenURI); 
+    event SetFee1TokenAddress(address token1);
+    event SetFee2TokenAddress(address token2);
+    event SetWhitelistLevel(address addr, uint level);
 
     Voyager[] public voyagers;
 
     mapping(address => uint[]) public ownedVoyagers;
     mapping(address => mapping( uint256 => uint256 )) public ownedVoyagersIndex;
     mapping(uint256 => uint256) public allVoyagersIndex;
-    mapping (address => uint256) public maxLevelOfOwner;
-    mapping (address => mapping(uint256 => uint256)) public tokenLevelCount;
+    mapping(address => uint256) public maxLevelOfOwner;
+    mapping(address => mapping(uint256 => uint256)) public tokenLevelCount;
     mapping(uint256 => string) private _tokenURIs;
     mapping(uint256 => mapping(uint256 => bool)) public setByOwner;
     mapping(address => uint256) private _tokenIDWithoutURI;
-    mapping (address => bool) private _expiredWhitelist; 
+    mapping(address => uint256) private _mintTokenIDWithoutURI;
+    mapping(address => bool) private _expiredWhitelist;
+    mapping(address => uint) public whitelistLevelOf;
 
     uint256 private _maxWhitelisted = 1000;
     uint256 private _totalMinted;
@@ -32,6 +51,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 _maxLevel
     ) ERC721("Voyager", "VOG")  
     {
+        require(_maxLevel <= levelUpDGT.length && _maxLevel <= levelUpDSP.length, "_maxLevel is too large.");
         maxLevel = _maxLevel;
         initialLevelUpFees();
     }
@@ -93,6 +113,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy
     {
         setByOwner[_tokenId][_level] = _isSet;
+
+        emit SetSetByOwner(_tokenId, _level, _isSet);
     }
     
     function getTokenIDWithoutURI(
@@ -102,12 +124,29 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         return _tokenIDWithoutURI[_addr];
     }
 
+    function getMintTokenIDWithoutURI(
+        address _addr
+    ) public view returns (uint256) 
+    {
+        return _mintTokenIDWithoutURI[_addr];
+    }
+
+    function setMintTokenIDWithoutURI(
+        address _addr, 
+        uint256 _tokenId
+    ) public onlyProxy 
+    {
+        _mintTokenIDWithoutURI[_addr] = _tokenId;
+    }
+
     function setTokenIDWithoutURI(
         address _addr, 
         uint256 _tokenId
     ) public onlyProxy 
     {
         _tokenIDWithoutURI[_addr] = _tokenId;
+
+        emit SetTokenIDWithoutURI(_addr, _tokenId);
     }
 
     function getMaxWhitelisted() public view returns (uint256) {
@@ -123,6 +162,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy 
     {
         _totalMinted = _amount;
+
+        emit SetTotalMinted(_amount);
     }
 
     function getWhitelistExpired() public view returns (uint256){
@@ -134,6 +175,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy 
     {
         _whitelistExpired = _amount;
+
+        emit SetWhitelistExpired(_amount);
     }
 
     function getToken0URI() public view returns (string memory) {
@@ -145,6 +188,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy 
     {
         _token0URI = _string;
+
+        emit Token0URI(_string);
     }
 
     function getExpiredWhitelist(
@@ -160,6 +205,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy 
     {
         _expiredWhitelist[_addr] = _isExpired;
+
+        emit SetExpiredWhitelist(_addr, _isExpired);
     }
 
     function getAllVoyagerIndex(
@@ -182,6 +229,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy 
     {
         maxLevelOfOwner[_addr] = _level;
+
+        emit SetMaxLevelOfOwner(_addr, _level);
     }
 
     function getTokenLevelCount(
@@ -199,9 +248,21 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
     ) public onlyProxy 
     {
         tokenLevelCount[_addr][_level] = _amount;
+
+        emit SetTokenLevelCount(_addr, _level, _amount);
     }
 
-    function mintVoyayer(
+    function getWhitelistLevel(address addr) external view returns(uint) {
+        return whitelistLevelOf[addr];
+    }
+
+    function setWhitelistLevel(address addr, uint level) external onlyProxy {
+        whitelistLevelOf[addr] = level;
+
+        emit SetWhitelistLevel(addr, level);
+    }
+
+    function mintVoyager(
         address _addr, 
         uint256 _tokenId
     ) external onlyProxy 
@@ -214,7 +275,9 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 _tokenId
     ) external 
     {
-        require(getTokenIDWithoutURI(msg.sender) == 0, "Set tokenURI first");
+        require(getTokenIDWithoutURI(msg.sender) == 0  &&
+                getMintTokenIDWithoutURI(msg.sender) == 0, 
+                "Set tokenURI first");
         _safeTransfer(msg.sender, _to, _tokenId, "");
     }
 
@@ -254,7 +317,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         uint256 index
     ) public view virtual override returns (uint256) 
     {
-        require(index < VoyagerStorage.totalSupply(), "ERC721Enumerable: global index out of bounds");
+        require(index < totalSupply(), "ERC721Enumerable: global index out of bounds");
         return voyagers[index].id;
     }
 
@@ -383,11 +446,15 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
         } else {
             levelUpFees[_toLevel-1] = FeeComponent(_dgt, _dsp);
         }
+
+        emit SetLevelUpFee(_toLevel, _dgt, _dsp);
     }
 
     function setCoolDown(uint256 _toLevel, uint32 _interval) external onlyOwner {
         require (_toLevel > 1 && _toLevel <= cooldowns.length.add(1), "Over max level"); 
         cooldowns[_toLevel-2] = _interval;
+
+        emit SetCoolDown(_toLevel, _interval);
     }
 
     function initialLevelUpFees() internal {
@@ -440,15 +507,21 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
 
     function setLevelStartHoldingTime(uint256 tokenId, uint256 _curTimeStamp) public onlyProxy {
         voyagers[allVoyagersIndex[tokenId]].levelStartHoldingTime = _curTimeStamp;
+    
+        emit SetLevelStartHoldingTime(tokenId, _curTimeStamp);
     }
 
     function setLevel(uint256 tokenId, uint256 level) public onlyProxy {
         voyagers[allVoyagersIndex[tokenId]].level = uint8(level);
+
+        emit SetLevel(tokenId, level);
     }
 
     function _setTokenURI(uint256 _tokenId, string memory _tokenURI) public virtual onlyProxy {
         require(_exists(_tokenId), "ERC721Metadata: URI set of nonexistent token");
         _tokenURIs[_tokenId] = _tokenURI;
+        
+        emit SetTokenURI(_tokenId, _tokenURI);   
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
@@ -460,9 +533,13 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, BaseStorage, AccessControl
 
     function setFee1TokenAddress(address _token1) public onlyProxy {
         dgtAddress = _token1;
+
+        emit SetFee1TokenAddress(_token1);
     }
 
     function setFee2TokenAddress(address _token2) public onlyProxy {
         dspAddress = _token2;
+
+        emit SetFee2TokenAddress(_token2);
     }
 }

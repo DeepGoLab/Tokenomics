@@ -2,19 +2,36 @@
 
 pragma solidity ^0.8.0;
 
-import "./HasAdmin.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract HasMinters is HasAdmin {
+contract HasMinters is Ownable {
   event MinterAdded(address indexed _minter);
   event MinterRemoved(address indexed _minter);
+  event FlipMintableState(bool mintIsActive);
 
   address[] public minters;
   mapping (address => bool) public minter;
+
+  bool public mintIsActive = true;
 
   modifier onlyMinter {
     require(minter[msg.sender]);
     _;
   }
+
+  modifier activeMint() {
+    require(mintIsActive, "Unactive to mint");
+    _;
+  } 
+
+    /*
+    * Pause sale if active, make active if paused
+    */
+    function flipMintableState() external onlyOwner {
+        mintIsActive = !mintIsActive;
+
+        emit FlipMintableState(mintIsActive);
+    }
 
   function addMinters(address[] memory _addedMinters) public onlyOwner {
     address _minter;
@@ -30,7 +47,7 @@ contract HasMinters is HasAdmin {
     }
   }
 
-  function removeMinters(address[] memory _removedMinters) public onlyOwner {
+  function removeMinters(address[] memory _removedMinters) external onlyOwner {
     address _minter;
 
     for (uint256 i = 0; i < _removedMinters.length; i++) {
@@ -58,5 +75,9 @@ contract HasMinters is HasAdmin {
 
   function isMinter(address _addr) public view returns (bool) {
     return minter[_addr];
+  }
+
+  function getMinters() public view returns (address[] memory) {
+    return minters;
   }
 }

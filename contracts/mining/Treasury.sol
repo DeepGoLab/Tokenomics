@@ -1,17 +1,30 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
 import "../utils/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../voyager/VoyagerStorage.sol";
+import "../Guild/VoyagerStorage.sol";
 import "hardhat/console.sol";
-
-pragma solidity ^0.8.0;
 
 contract Treasury is AccessControl{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    address private treasury;
+    event InitializeWeightOfLevel(uint maxLevel);
+    event SetWeightOfLevel(uint level, uint weight);
+    event SetStakeTokenId(address user, uint tokenId);
+    event SetTotalStakeShare(uint value);
+    event SetStakeShareOfUser(address user, uint share);
+    event SetUserAmount(uint pid, address user, uint amount);
+    event SetUserShare(uint pid, address user, uint amount);
+    event SetUserRewardDebt(uint pid, address user, uint amount);
+    event SetAccDGTPerShare(uint pid, uint accDGTPerShare);
+    event SetLastRewardBlock(uint pid, uint lastRewardBlock);
+    event SetTotalAllocPoint(uint value);
+    event SetSingleAllocPoint(uint pid, uint value);
+    event AddPool(PoolInfo pool);
+
     IERC20 private DGT;
     VoyagerStorage private NFT;
     uint256 private bonusEndBlock;
@@ -58,18 +71,24 @@ contract Treasury is AccessControl{
         console.log("treasury deploy success");
     }
 
-    function initializeWeightOfLevel(uint _maxLevel) public onlyOwner {
+    function initializeWeightOfLevel(uint _maxLevel) external onlyOwner {
         for (uint level=0; level < _maxLevel+1; level++) {
             weightOfLevel[level] = 1;
         }
+
+        emit InitializeWeightOfLevel(_maxLevel);
     }
 
-    function setWeightOfLevel(uint level, uint weight) public onlyOwner {
+    function setWeightOfLevel(uint level, uint weight) external onlyOwner {
         weightOfLevel[level] = weight;
+
+        emit SetWeightOfLevel(level, weight);
     }
 
     function setStakeTokenId(address _user, uint _tokenId) public onlyProxy {
         stakeTokenId[_user] = _tokenId;
+
+        emit SetStakeTokenId(_user, _tokenId);
     }
 
     function getDGT() external view returns (IERC20) {
@@ -114,22 +133,32 @@ contract Treasury is AccessControl{
 
     function setTotalStakeShare(uint _value) public onlyProxy {
         totalStakeShare = _value;
+
+        emit SetTotalStakeShare(_value);
     } 
 
-    function setStakeShareOfUser(address _user, uint _share) public onlyProxy {
+    function setStakeShareOfUser(address _user, uint _share) external onlyProxy {
         stakeShareOf[_user] = _share;
+
+        emit SetStakeShareOfUser(_user, _share);
     }
 
     function setUserAmount(uint _pid, address _user, uint _amount) public onlyProxy {
         userInfo[_pid][_user].amount = _amount;
+
+        emit SetUserAmount(_pid, _user, _amount);
     }
 
     function setUserShare(uint _pid, address _user, uint _amount) public onlyProxy {
         userInfo[_pid][_user].share = _amount;
+
+        emit SetUserShare(_pid, _user, _amount);
     }
 
     function setUserRewardDebt(uint _pid, address _user, uint _amount) public onlyProxy {
         userInfo[_pid][_user].rewardDebt = _amount;
+        
+        emit SetUserRewardDebt(_pid, _user, _amount); 
     }
 
     function getUserReward(uint _pid, address _addr) public view returns (uint pending) {
@@ -144,6 +173,8 @@ contract Treasury is AccessControl{
 
     function setAccDGTPerShare(uint _pid, uint _accDGTPerShare)  public onlyProxy {
         poolInfo[_pid].accDGTPerShare = _accDGTPerShare;
+
+        emit SetAccDGTPerShare(_pid, _accDGTPerShare);
     }
 
     function getLastRewardBlock(uint _pid) external view returns (uint) {
@@ -152,6 +183,8 @@ contract Treasury is AccessControl{
 
     function setLastRewardBlock(uint _pid, uint _lastRewardBlock) public onlyProxy {
         poolInfo[_pid].lastRewardBlock = _lastRewardBlock;
+
+        emit SetLastRewardBlock(_pid, _lastRewardBlock);
     }
 
     function getPoolToken(uint _pid) external view returns (IERC20) {
@@ -160,14 +193,20 @@ contract Treasury is AccessControl{
 
     function setTotalAllocPoint(uint _value) public onlyProxy {
         totalAllocPoint = _value;
+
+        emit SetTotalAllocPoint(_value);
     }
 
     function setSingleAllocPoint(uint _pid, uint _value) public onlyProxy {
         poolInfo[_pid].allocPoint = _value;
+
+        emit SetSingleAllocPoint(_pid, _value);
     }
 
     function addPool(PoolInfo memory _pool) public onlyProxy {
         poolInfo.push(_pool);
+
+        emit AddPool(_pool);
     }
 
     function poolLength() external view returns (uint256) {
@@ -182,11 +221,11 @@ contract Treasury is AccessControl{
         NFT.transferVoyager(to_, tokenId_);
     }
 
-    function withdrawNFT(address to_, uint tokenId_) public onlyOwner {
+    function withdrawNFT(address to_, uint tokenId_) external onlyOwner {
         NFT.transferVoyager(to_, tokenId_);
     }
 
-    function withdrawDGT(uint value_) public onlyOwner {
+    function withdrawDGT(uint value_) external onlyOwner {
         if ( DGT.balanceOf(address(this)) < value_) {
             value_ = DGT.balanceOf(address(this));
         }
@@ -204,15 +243,14 @@ contract Treasury is AccessControl{
 
     // RETURN | REWARD MULTIPLIER OVER GIVEN BLOCK RANGE | INCLUDES START BLOCK
     function getMultiplier(uint256 _from, uint256 _to) public view returns (uint256) {
+        require(_from <= _to, "_from must less than _to");
         _from = _from >= startBlock ? _from : startBlock;
         if (_to <= bonusEndBlock) {
             return _to.sub(_from);
         } else if (_from >= bonusEndBlock) {
-            return _to.sub(_from);
+            return 0;
         } else {
-            return bonusEndBlock.sub(_from).add(
-                _to.sub(bonusEndBlock)
-            );
+            return bonusEndBlock.sub(_from);
         }
     }
 
@@ -221,12 +259,13 @@ contract Treasury is AccessControl{
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accDGTPerShare = pool.accDGTPerShare;
-        uint256 lpSupply = pool.token.balanceOf(address(this));
+        uint256 lpSupply = _pid>0? pool.token.balanceOf(address(this)) : totalStakeShare;
+        uint256 userShare = _pid>0? user.amount : user.share;
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
             uint256 DGTReward = multiplier.mul(DGTPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
             accDGTPerShare = accDGTPerShare.add(DGTReward.mul(1e12).div(lpSupply));
         }
-        return user.amount.mul(accDGTPerShare).div(1e12).sub(user.rewardDebt);
+        return userShare.mul(accDGTPerShare).div(1e12).sub(user.rewardDebt);
     }
 }

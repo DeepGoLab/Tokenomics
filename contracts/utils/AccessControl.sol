@@ -11,7 +11,10 @@ contract AccessControl is Ownable, ReentrancyGuard {
     using SafeMath for uint;
 
     // event ContractUpgrade(address newContract);
+    event SetProxy(address proxy);
     event AdminTransferred(address oldAdmin, address newAdmin);
+    event FlipMintableState(bool mintIsActive);
+    event FlipMineState(bool mineIsActive);
 
     address private _admin;
     address public proxy;
@@ -50,6 +53,8 @@ contract AccessControl is Ownable, ReentrancyGuard {
     function setProxy(address _proxy) external onlyOwner {
         require(_proxy != address(0), "Invalid Address");
         proxy = _proxy;
+
+        emit SetProxy(_proxy);
     }
 
     modifier onlyProxy() {
@@ -68,7 +73,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
     } 
 
     modifier activeMine() {
-        require(mineIsActive, "Unactive to mint");
+        require(mineIsActive, "Unactive to mine");
         _;
     } 
     
@@ -81,7 +86,7 @@ contract AccessControl is Ownable, ReentrancyGuard {
      * @dev Transfers ownership of the contract to a new account (`newAdmin`).
      * Can only be called by the current admin.
      */
-    function transferAdmin(address newAdmin) public virtual onlyOwner {
+    function transferAdmin(address newAdmin) external virtual onlyOwner {
         require(newAdmin != address(0), "Invalid Admin: new admin is the zero address");
         _setAdmin(newAdmin);
     }
@@ -89,7 +94,15 @@ contract AccessControl is Ownable, ReentrancyGuard {
     /*
     * Pause sale if active, make active if paused
     */
-    function flipMintableState() public onlyAdmin {
+    function flipMintableState() external onlyOwner {
         mintIsActive = !mintIsActive;
+
+        emit FlipMintableState(mintIsActive);
+    }
+
+    function flipMineState() external onlyOwner {
+        mineIsActive = !mineIsActive;
+
+        emit FlipMineState(mineIsActive);
     }
 }

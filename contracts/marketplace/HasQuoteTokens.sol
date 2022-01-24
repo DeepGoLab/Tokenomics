@@ -15,7 +15,7 @@ contract HasQuoteTokens is AccessControl {
     _;
   }
 
-  function addQuoteTokens(address[] memory _addedQuoteTokens) public onlyAdmin {
+  function addQuoteTokens(address[] memory _addedQuoteTokens) external onlyAdmin {
     address _QuoteToken;
 
     for (uint256 i = 0; i < _addedQuoteTokens.length; i++) {
@@ -29,7 +29,7 @@ contract HasQuoteTokens is AccessControl {
     }
   }
 
-  function removeQuoteTokens(address[] memory _removedQuoteTokens) public onlyAdmin {
+  function removeQuoteTokens(address[] memory _removedQuoteTokens) external onlyAdmin {
     address _QuoteToken;
 
     for (uint256 i = 0; i < _removedQuoteTokens.length; i++) {

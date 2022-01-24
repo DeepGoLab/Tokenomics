@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../utils/AccessControl.sol";
-import "../voyager/VoyagerStorage.sol";
+import "../Guild/VoyagerStorage.sol";
 import "./Treasury.sol";
 import "hardhat/console.sol";
 
@@ -57,7 +57,7 @@ contract LiquidityMining is AccessControl {
         ts.setUserShare(0, msg.sender, curUserShare);   
     }
 
-    function stakeNFT(uint tokenId) public {
+    function stakeNFT(uint tokenId) external activeMine {
         require(ts.stakeTokenId(msg.sender) == 0 ,"NFT Already staked");
 
         ts.setStakeTokenId(msg.sender, tokenId);
@@ -80,7 +80,7 @@ contract LiquidityMining is AccessControl {
         ts.setUserRewardDebt(0, msg.sender, _rewardDebt);          
     }
 
-    function unstakeNFT() public {
+    function unstakeNFT() external activeMine {
         require(ts.stakeTokenId(msg.sender) > 0 ,"No NFT staked");
 
         uint tokenId = ts.stakeTokenId(msg.sender);
@@ -105,6 +105,7 @@ contract LiquidityMining is AccessControl {
 
     function add(uint256 _allocPoint, IERC20 _token, uint256 _taxRate, bool _withUpdate) public 
         onlyOwner {
+        ts.checkPoolDuplicate(_token);
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -119,7 +120,7 @@ contract LiquidityMining is AccessControl {
         }));
     }
 
-    function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner {
+    function set(uint256 _pid, uint256 _allocPoint, bool _withUpdate) public onlyOwner validatePool(_pid) {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -129,13 +130,21 @@ contract LiquidityMining is AccessControl {
     }
 
     function massUpdatePools() public {
-        uint256 length = ts.getPoolInfo().length;
-        for (uint256 pid = 0; pid < length; ++pid) {
-            updatePool(pid);
+        uint256 length = ts.getPoolInfo().length; 
+        
+        if (length > 0) {
+            updateStakingPool(); 
+        }
+        if (length > 1) {
+            for (uint256 pid = 1; pid < length; ++pid) {
+                updatePool(pid); 
+            }
         }
     }
 
-    function updatePool(uint256 _pid) public {
+    function updatePool(uint256 _pid) public validatePool(_pid) {
+        require(_pid > 0, "Only for liquidity mining");
+
         if (block.number <= ts.getLastRewardBlock(_pid)) { 
             return;
         }
@@ -155,7 +164,7 @@ contract LiquidityMining is AccessControl {
         ts.setLastRewardBlock(_pid, block.number); 
     }
 
-    function updateStakingPool() public {
+    function updateStakingPool() public activeMine {
         if (block.number <= ts.getLastRewardBlock(0)) { 
             return;
         }
@@ -184,17 +193,31 @@ contract LiquidityMining is AccessControl {
     }
 
     // WITHDRAW | ASSETS (TOKENS) WITH NO REWARDS | EMERGENCY ONLY
-    function emergencyWithdraw(uint256 _pid) public nonReentrant {
+    function emergencyWithdraw(uint256 _pid) public nonReentrant activeMine validatePool(_pid) {
+        uint256 userAmount = ts.getUserInfo(_pid, msg.sender).amount;
+
         ts.setUserAmount(_pid, msg.sender, 0);
         ts.setUserRewardDebt(_pid, msg.sender, 0);
 
-        ts.getPoolToken(_pid).safeTransfer(address(msg.sender), ts.getUserInfo(_pid, msg.sender).amount);
+        if (_pid == 0) { 
+            ts.setTotalStakeShare(ts.totalStakeShare().sub(ts.getUserInfo(0, 
+                                  msg.sender).share));
+            ts.setUserShare(0, msg.sender, 0); 
 
-        emit EmergencyWithdraw(msg.sender, _pid, ts.getUserInfo(_pid, msg.sender).amount);        
+            uint tokenId = ts.stakeTokenId(msg.sender);
+            if (tokenId > 0) {
+                ts.setStakeTokenId(msg.sender, 0); 
+                ts.transferNFT(msg.sender, tokenId );
+            }
+        }
+
+        ts.getPoolToken(_pid).safeTransfer(address(msg.sender), userAmount);
+
+        emit EmergencyWithdraw(msg.sender, _pid, userAmount);        
     }
 
     // DEPOSIT | ASSETS (TOKENS)
-    function deposit(uint256 _pid, uint256 _amount) public nonReentrant {
+    function deposit(uint256 _pid, uint256 _amount) public nonReentrant activeMine validatePool(_pid) {
         require(_pid > 0, "Only for liquidity mining");
         updatePool(_pid);
 
@@ -219,7 +242,7 @@ contract LiquidityMining is AccessControl {
         emit Deposit(msg.sender, _pid, _amount);
     }
 
-    function depositStaking(uint _amount) public nonReentrant {
+    function depositStaking(uint _amount) public nonReentrant activeMine {
         updateStakingPool();
 
         if(ts.getUserInfo(0, msg.sender).amount > 0) {
@@ -246,7 +269,7 @@ contract LiquidityMining is AccessControl {
     }
 
     // WITHDRAW | ASSETS (TOKENS)
-    function withdraw(uint256 _pid, uint256 _amount) public nonReentrant {
+    function withdraw(uint256 _pid, uint256 _amount) public nonReentrant activeMine validatePool(_pid) {
         require(ts.getUserInfo(_pid, msg.sender).amount >= _amount, "withdraw: not good");
         updatePool(_pid);
         uint256 pending = ts.getUserInfo(_pid, msg.sender).amount.mul(ts.getPool(_pid).accDGTPerShare)
@@ -268,7 +291,7 @@ contract LiquidityMining is AccessControl {
 
     function withdrawStaking(
         uint256 _amount
-    ) public nonReentrant 
+    ) public nonReentrant activeMine
     {
         require(ts.getUserInfo(0, msg.sender).amount >= _amount, "withdraw: not good");
 
@@ -293,7 +316,7 @@ contract LiquidityMining is AccessControl {
     }
 
     // SAFE TRANSFER FUNCTION | ACCOUNTS FOR ROUNDING ERRORS | ENSURES SUFFICIENT DGT IN POOLS.
-    function safeDGTTransfer(address _to, uint256 _amount) internal {
+    function safeDGTTransfer(address _to, uint256 _amount) internal activeMine {
         uint256 DGTBal = ts.getDGT().balanceOf(address(ts));
         if (_amount > DGTBal) {
             ts.transferDGT(_to, DGTBal);

@@ -39,3 +39,9 @@ debug
 
 # ignore
 .DS_Store
+
+# verify
+verify
+
+# test
+testFunction
