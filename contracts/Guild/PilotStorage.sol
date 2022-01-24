@@ -14,6 +14,10 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     event SetTokenIDWithoutURI(address addr, uint tokenId);
     event SetTotalMinted(uint amount);
     event SetWhitelistExpired(uint amount);
+    event SetBaseMintFee(uint256 baseMintFee);
+    event SetLevelUpExp(uint256 level, uint256 exp);
+    event SetDgtAddress(address addr);
+    event SetDspAddress(address addr);
 
     struct Fee {
         address token1;
@@ -34,7 +38,6 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
         // uint256 startHoldingTime;
     }
 
-    VoyagerStorage public vs;
     // 1. 铸造者即会长(1-x)%收益，NFT持有者x%收益，x由会长设定，会长可变更
     uint256 public chargeShareDecimal = 10 ** 4;
 
@@ -76,6 +79,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
 
     function setLevelUpExp(uint256 level_, uint256 exp_) external onlyOwner {
         levelUpExp[level_] = exp_;
+        emit SetLevelUpExp(level_, exp_);
     }
 
     function setIsBanned(uint256 tokenId_, address addr_) external onlyProxy {
@@ -127,6 +131,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
 
     function setBaseMintFee(uint256 baseMintFee_) external onlyOwner {
         baseMintFee = baseMintFee_;
+        emit SetBaseMintFee(baseMintFee_);
     }
 
     function getAllPilotIndex(
@@ -169,10 +174,12 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
 
     function setDgtAddress(address addr_) external onlyOwner notZeroAddress(addr_) {
         dgtAddress = addr_;
+        emit SetDgtAddress(addr_);
     }
 
     function setDspAddress(address addr_) external onlyOwner notZeroAddress(addr_) {
         dspAddress = addr_;
+        emit SetDspAddress(addr_);
     }
 
     function setMaxSupply(uint totalSupply_) external onlyProxy {
@@ -277,7 +284,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
         _safeMint(_addr, _tokenId);
     }
 
-    function _setTokenURI(uint256 _tokenId, string memory _tokenURI) public virtual {
+    function setTokenURI(uint256 _tokenId, string memory _tokenURI) external onlyProxy {
         require(_exists(_tokenId), "ERC721Metadata: URI set of nonexistent token");
         _tokenURIs[_tokenId] = _tokenURI;
         
