@@ -25,7 +25,6 @@ contract PilotWhale is AccessControl, Pausable {
     PilotStorage public pS;
     VoyagerStorage public vS;
     TreasuryStorage public tS;
-    DeepSeaPlankton public dsp;
 
     constructor(
         address _pilotStorage,
@@ -83,7 +82,7 @@ contract PilotWhale is AccessControl, Pausable {
         pS.mintPilot(msg.sender, tokenID);
 
         if (tokenID == 0) {
-            pS._setTokenURI(tokenID, pS._token0URI());
+            pS.setTokenURI(tokenID, pS._token0URI());
         } else {
             pS.setMintTokenIDWithoutURI(msg.sender, tokenID);
         }
@@ -158,7 +157,7 @@ contract PilotWhale is AccessControl, Pausable {
         vS.mintVoyager(msg.sender, tokenID);
 
         if (tokenID == 0) {
-            vS._setTokenURI(tokenID, vS._token0URI());
+            vS.setTokenURI(tokenID, vS._token0URI());
         } else {
             vS.setMintTokenIDWithoutURI(msg.sender, tokenID);
         }
@@ -313,7 +312,7 @@ contract PilotWhale is AccessControl, Pausable {
             require(pS.ownerOf(tokenID) == _user, "Not owner");
             require(_tokenid == tokenID, "Consistent tokenID");
 
-            pS._setTokenURI(tokenID, _tokenURI);
+            pS.setTokenURI(tokenID, _tokenURI);
 
             pS.setTokenIDWithoutURI(_user, 0);
             pS.setMintTokenIDWithoutURI(_user, 0);
@@ -327,7 +326,7 @@ contract PilotWhale is AccessControl, Pausable {
             require(vS.ownerOf(tokenID) == _user, "Not owner");
             require(_tokenid == tokenID, "Consistent tokenID");
 
-            vS._setTokenURI(tokenID, _tokenURI);
+            vS.setTokenURI(tokenID, _tokenURI);
 
             vS.setTokenIDWithoutURI(_user, 0);
             vS.setMintTokenIDWithoutURI(_user, 0);            

@@ -9,12 +9,10 @@ import "../utils/Sig.sol";
 contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     using SafeMath for uint;
 
-    struct Fee {
-        address token1;
-        uint256 amount1;
-        address token2;
-        uint256 amount2;
-    } 
+    event SetTokenURI(uint tokenId, string tokenURI);
+    event SetBaseMintFee(uint256 baseMintFee);
+    event SetLevelUpFee(uint256 levelUpFee);
+
 
     struct Voyager {
         uint256 id;
@@ -23,8 +21,6 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
         address owner;
     }
 
-    address public dgtAddress = address(0);
-    address public dspAddress = address(0);
     uint256 public tokenDecimal = 10 ** 18;
     uint256 public _totalMinted;
     uint256 public baseMintFee = 10 * tokenDecimal; // dgt费用
@@ -39,7 +35,6 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     mapping(address => uint256) public _tokenIDWithoutURI;
     mapping(address => uint256) public _mintTokenIDWithoutURI;
 
-    mapping(uint256 => bool) public isBurned;
     
     // 圈子成员数量
     mapping(uint256 => uint256) public voyagerCountOfPilot;
@@ -63,17 +58,20 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
         voyagerOfAddressOfPilot[pilotTokenId_][addr_] = voyagerId_;
     }
     
-    function _setTokenURI(uint256 _tokenId, string memory _tokenURI) public virtual {
+    function setTokenURI(uint256 _tokenId, string memory _tokenURI) external onlyProxy {
         require(_exists(_tokenId), "ERC721Metadata: URI set of nonexistent token");
-        _tokenURIs[_tokenId] = _tokenURI;  
+        _tokenURIs[_tokenId] = _tokenURI;
+        emit SetTokenURI(_tokenId, _tokenURI);
     }
 
     function setBaseMintFee(uint256 baseMintFee_) external onlyOwner {
         baseMintFee = baseMintFee_;
+        emit SetBaseMintFee(baseMintFee_);
     }
 
     function setLevelUpFee(uint256 levelUpFee_) external onlyOwner {
         baseMintFee = levelUpFee_;
+        emit SetLevelUpFee(levelUpFee_);
     }
 
     function mintVoyager(
