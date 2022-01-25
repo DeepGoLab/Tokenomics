@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "../utils/AccessControl.sol";
-import "../utils/Sig.sol";
+// import "../utils/Sig.sol";
 import "./VoyagerStorage.sol";
 
 contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
@@ -15,16 +15,15 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     event SetTotalMinted(uint amount);
     event SetWhitelistExpired(uint amount);
     event SetBaseMintFee(uint256 baseMintFee);
-    event SetLevelUpExp(uint256 level, uint256 exp);
     event SetDgtAddress(address addr);
     event SetDspAddress(address addr);
 
-    struct Fee {
-        address token1;
-        uint256 amount1;
-        address token2;
-        uint256 amount2;
-    } 
+    // struct Fee {
+    //     address token1;
+    //     uint256 amount1;
+    //     address token2;
+    //     uint256 amount2;
+    // } 
 
     struct Pilot {
         string name; // to set
@@ -39,22 +38,19 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     }
 
     // 1. 铸造者即会长(1-x)%收益，NFT持有者x%收益，x由会长设定，会长可变更
-    uint256 public chargeShareDecimal = 10 ** 4;
+    uint256 public constant chargeShareDecimal = 10 ** 4;
 
     // 2. 限定数量，前100个空投，白名单铸造无限制，第i个公会花费 50*(i+1) DGT
     uint256 public maxSupply = 100;
     address public dgtAddress = address(0);
     address public dspAddress = address(0);
-    uint256 public tokenDecimal = 10 ** 18;
+    uint256 public constant tokenDecimal = 10 ** 18;
 
-    uint256 public _maxWhitelisted = 100;
+    uint256 public constant _maxWhitelisted = 100;
     uint256 public _totalMinted;
     uint256 public _whitelistExpired;
-    uint256 public baseMintFee = 100 * tokenDecimal;
+    uint256 public baseMintFee = 50 * tokenDecimal;
     string public _token0URI;
-    
-    // levelUp fee
-    mapping(uint256 => Fee) public levelUpFee;
 
     Pilot[] public pilots;
     mapping(address => uint[]) public ownedPilots;
@@ -64,9 +60,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     mapping(address => uint256) public _tokenIDWithoutURI;
     mapping(address => uint256) public _mintTokenIDWithoutURI;
     mapping(address => bool) public _expiredWhitelist;
-    mapping(uint256 => mapping(address => uint)) public exp;
     mapping(uint256 => mapping(address => bool)) public isBannedOfPilot;
-    mapping(uint256 => uint256) public levelUpExp;
 
     constructor() ERC721("PilotWhale", "PLW") {}
 
@@ -77,21 +71,8 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
         _token0URI = _string;
     }
 
-    function setLevelUpExp(uint256 level_, uint256 exp_) external onlyOwner {
-        levelUpExp[level_] = exp_;
-        emit SetLevelUpExp(level_, exp_);
-    }
-
     function setIsBanned(uint256 tokenId_, address addr_) external onlyProxy {
         isBannedOfPilot[tokenId_][addr_] = true;
-    }
-
-    function setLevelUpFee(uint256 tokenId_, Fee memory fee_) external onlyProxy {
-        levelUpFee[tokenId_] = fee_;
-    }
-
-    function getLevelUpFee(uint256 tokenId_) external view onlyProxy returns(Fee memory fee) {
-        return levelUpFee[tokenId_];
     }
 
     function getPilot(
@@ -105,16 +86,8 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
         pilots[getAllPilotIndex(tokenId_)].leader = addr_;
     }
 
-    function setLevel(uint256 tokenId_, uint256 level_) external onlyProxy {
-        pilots[allPilotsIndex[tokenId_]].level = level_;
-    }
-
     function getLeader(uint256 tokenId_) external view returns (address) {
         return pilots[allPilotsIndex[tokenId_]].leader;
-    }
-
-    function getLevel(uint256 tokenId_) external view returns (uint256) {
-        return pilots[allPilotsIndex[tokenId_]].level;
     }
 
     function setChargeShare(uint256 tokenId_, uint256 chargeShare_) external onlyProxy {
@@ -126,7 +99,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     }
 
     function getMintFee(address addr_) public view returns(uint256 mintFee) {
-        mintFee = baseMintFee + ownedPilots[addr_].length * baseMintFee * 1 / 2;
+        mintFee = baseMintFee + ownedPilots[addr_].length * baseMintFee;
     }
 
     function setBaseMintFee(uint256 baseMintFee_) external onlyOwner {
@@ -153,15 +126,6 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     ) public view returns (bool) 
     {
         return _expiredWhitelist[_addr];
-    }
-
-    function setExp(uint tokenId_, address member_, uint256 exp_) external onlyProxy {
-        require(exp_ > 0, "Exp Not Positive");
-        exp[tokenId_][member_] += exp_;
-    }
-
-    function getExp(uint tokenId_, address member_) public view returns (uint256) {
-        return exp[tokenId_][member_];
     }
 
     function setExpiredWhitelist(
@@ -279,7 +243,7 @@ contract PilotStorage is ERC721, IERC721Enumerable, AccessControl {
     function mintPilot(
         address _addr, 
         uint256 _tokenId
-    ) external
+    ) onlyProxy external
     {
         _safeMint(_addr, _tokenId);
     }

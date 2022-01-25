@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "../utils/AccessControl.sol";
-import "../utils/Sig.sol";
+// import "../utils/Sig.sol";
 
 contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     using SafeMath for uint;
@@ -12,7 +12,7 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     event SetTokenURI(uint tokenId, string tokenURI);
     event SetBaseMintFee(uint256 baseMintFee);
     event SetLevelUpFee(uint256 levelUpFee);
-
+    event SetLevelUpExp(uint256 level, uint256 exp);
 
     struct Voyager {
         uint256 id;
@@ -34,7 +34,8 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
     mapping(uint256 => string) public _tokenURIs;
     mapping(address => uint256) public _tokenIDWithoutURI;
     mapping(address => uint256) public _mintTokenIDWithoutURI;
-
+    mapping(uint256 => uint256) public levelUpExp;
+    mapping(uint256 => mapping(address => uint)) public exp; // pilotId to address to exp
     
     // 圈子成员数量
     mapping(uint256 => uint256) public voyagerCountOfPilot;
@@ -69,9 +70,18 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
         emit SetBaseMintFee(baseMintFee_);
     }
 
+    function setLevel(uint256 tokenId_, uint256 level_) external onlyProxy {
+        voyagers[allVoyagersIndex[tokenId_]].level = level_;
+    }
+
     function setLevelUpFee(uint256 levelUpFee_) external onlyOwner {
         baseMintFee = levelUpFee_;
         emit SetLevelUpFee(levelUpFee_);
+    }
+
+    function setLevelUpExp(uint256 level_, uint256 exp_) external onlyOwner {
+        levelUpExp[level_] = exp_;
+        emit SetLevelUpExp(level_, exp_);
     }
 
     function mintVoyager(
@@ -152,12 +162,25 @@ contract VoyagerStorage is ERC721, IERC721Enumerable, AccessControl {
         return voyagers[allVoyagersIndex[tokenId_]].level;
     }
 
+    function getLevelUpFee() external view returns(uint256) {
+        return levelUpFee;
+    }
+
     function setPilotId(uint256 tokenId_, uint256 pilotId_) external onlyProxy {
         voyagers[allVoyagersIndex[tokenId_]].pilotId = pilotId_;
     }
 
     function getPilotId(uint256 tokenId_) external view returns(uint256) {
         return voyagers[allVoyagersIndex[tokenId_]].pilotId;
+    }
+
+    function getExp(uint pilotId_, address member_) public view returns (uint256) {
+        return exp[pilotId_][member_];
+    }
+
+    function setExp(uint pilotId_, address member_, uint256 exp_) external onlyProxy {
+        require(exp_ > 0, "Exp Not Positive");
+        exp[pilotId_][member_] = exp_;
     }
 
     function burn(uint256 pilotId_, address addr_) external onlyProxy {
